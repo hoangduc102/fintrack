@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"net"
 	"net/http"
@@ -14,18 +15,33 @@ import (
 type Server struct {
 	httpServer *http.Server
 	cfg        *config.Config
+	db         *sql.DB
+}
+
+// Option configures Server options.
+type Option func(*Server)
+
+// WithDB sets the database pool instance to be closed during graceful shutdown.
+func WithDB(db *sql.DB) Option {
+	return func(s *Server) {
+		s.db = db
+	}
 }
 
 // New creates a configured Server instance.
-func New(cfg *config.Config) *Server {
+func New(cfg *config.Config, opts ...Option) *Server {
 	router := NewRouter(cfg)
-	return &Server{
+	s := &Server{
 		httpServer: &http.Server{
 			Addr:    ":" + cfg.Port,
 			Handler: router,
 		},
 		cfg: cfg,
 	}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
 }
 
 // Serve starts accepting connections on the given net.Listener and handles graceful shutdown
@@ -47,8 +63,19 @@ func (s *Server) Serve(ctx context.Context, ln net.Listener) error {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
+		var shutdownErr error
 		if err := s.httpServer.Shutdown(shutdownCtx); err != nil {
-			return err
+			shutdownErr = err
+		}
+
+		if s.db != nil {
+			if err := s.db.Close(); err != nil && shutdownErr == nil {
+				shutdownErr = err
+			}
+		}
+
+		if shutdownErr != nil {
+			return shutdownErr
 		}
 
 		return <-errChan
@@ -74,8 +101,19 @@ func (s *Server) Run(ctx context.Context) error {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
+		var shutdownErr error
 		if err := s.httpServer.Shutdown(shutdownCtx); err != nil {
-			return err
+			shutdownErr = err
+		}
+
+		if s.db != nil {
+			if err := s.db.Close(); err != nil && shutdownErr == nil {
+				shutdownErr = err
+			}
+		}
+
+		if shutdownErr != nil {
+			return shutdownErr
 		}
 
 		return <-errChan

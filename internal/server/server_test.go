@@ -2,6 +2,7 @@ package server_test
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -9,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/hoangduc102/fintrack/internal/config"
 	"github.com/hoangduc102/fintrack/internal/server"
 )
@@ -109,3 +111,64 @@ func TestServer_PortAlreadyInUse(t *testing.T) {
 		t.Fatal("timed out: srv.Run blocked indefinitely instead of returning listener error")
 	}
 }
+
+func TestServer_DeterministicGracefulShutdownWithDB(t *testing.T) {
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("failed to listen on ephemeral port: %v", err)
+	}
+
+	_, port, err := net.SplitHostPort(ln.Addr().String())
+	if err != nil {
+		t.Fatalf("failed to split host and port: %v", err)
+	}
+
+	cfg := &config.Config{
+		Port:        port,
+		Environment: "test",
+	}
+
+	db, err := sql.Open("pgx", "postgres://user:pass@127.0.0.1:5432/fintrack")
+	if err != nil {
+		t.Fatalf("failed to open database: %v", err)
+	}
+
+	srv := server.New(cfg, server.WithDB(db))
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	errChan := make(chan error, 1)
+	go func() {
+		errChan <- srv.Serve(ctx, ln)
+	}()
+
+	client := &http.Client{Timeout: 2 * time.Second}
+	resp, err := client.Get(fmt.Sprintf("http://%s/health", ln.Addr().String()))
+	if err != nil {
+		t.Fatalf("failed to perform health check request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, resp.StatusCode)
+	}
+
+	// Trigger graceful shutdown
+	cancel()
+
+	select {
+	case err := <-errChan:
+		if err != nil {
+			t.Errorf("expected clean shutdown, got error: %v", err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("timed out waiting for server to shut down cleanly")
+	}
+
+	// Verify that DB is closed after server shutdown
+	if err := db.PingContext(context.Background()); err == nil {
+		t.Error("expected database connection to be closed after server shutdown, but ping succeeded")
+	}
+}
+
