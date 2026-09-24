@@ -9,13 +9,17 @@ import (
 	"time"
 
 	"github.com/hoangduc102/fintrack/internal/config"
+	"github.com/hoangduc102/fintrack/internal/handler"
+	"github.com/hoangduc102/fintrack/internal/repository"
+	"github.com/hoangduc102/fintrack/internal/service"
 )
 
 // Server wraps the HTTP server and configuration.
 type Server struct {
-	httpServer *http.Server
-	cfg        *config.Config
-	db         *sql.DB
+	httpServer  *http.Server
+	cfg         *config.Config
+	db          *sql.DB
+	authHandler *handler.AuthHandler
 }
 
 // Option configures Server options.
@@ -28,19 +32,34 @@ func WithDB(db *sql.DB) Option {
 	}
 }
 
+// WithAuthHandler sets the AuthHandler instance for routing.
+func WithAuthHandler(h *handler.AuthHandler) Option {
+	return func(s *Server) {
+		s.authHandler = h
+	}
+}
+
 // New creates a configured Server instance.
 func New(cfg *config.Config, opts ...Option) *Server {
-	router := NewRouter(cfg)
 	s := &Server{
-		httpServer: &http.Server{
-			Addr:    ":" + cfg.Port,
-			Handler: router,
-		},
 		cfg: cfg,
 	}
 	for _, opt := range opts {
 		opt(s)
 	}
+
+	if s.authHandler == nil && s.db != nil {
+		userRepo := repository.NewPostgresUserRepository(s.db)
+		authService := service.NewAuthService(userRepo)
+		s.authHandler = handler.NewAuthHandler(authService)
+	}
+
+	router := NewRouter(cfg, s.authHandler)
+	s.httpServer = &http.Server{
+		Addr:    ":" + cfg.Port,
+		Handler: router,
+	}
+
 	return s
 }
 
