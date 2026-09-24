@@ -12,6 +12,7 @@ var (
 	ErrBadRequest         = errors.New("bad request")
 	ErrUnauthorized       = errors.New("unauthorized")
 	ErrEmailAlreadyExists = errors.New("email already exists")
+	ErrInvalidCredentials = errors.New("invalid email or password")
 )
 
 // ValidationError captures field-specific validation failures.

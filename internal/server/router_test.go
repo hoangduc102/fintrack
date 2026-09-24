@@ -7,8 +7,10 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
+	"github.com/hoangduc102/fintrack/internal/auth"
 	"github.com/hoangduc102/fintrack/internal/config"
 	"github.com/hoangduc102/fintrack/internal/domain"
 	"github.com/hoangduc102/fintrack/internal/handler"
@@ -134,3 +136,62 @@ func TestRegisterRoute(t *testing.T) {
 		t.Errorf("expected display name 'Router Test', got %v", resp.DisplayName)
 	}
 }
+
+func TestLoginAndMeRoute(t *testing.T) {
+	cfg := &config.Config{
+		Environment: "test",
+		Port:        "8080",
+	}
+
+	repo := &fakeUserRepoForRouter{users: make(map[string]*domain.User)}
+	jwtManager := auth.NewJWTManager("test-secret", 24*time.Hour)
+	authService := service.NewAuthService(repo, jwtManager)
+	authHandler := handler.NewAuthHandler(authService)
+
+	router := server.NewRouter(cfg, authHandler, jwtManager)
+
+	// 1. Register
+	regBody := `{"email":"flow@example.com","password":"password123","display_name":"Flow User"}`
+	regReq, _ := http.NewRequest(http.MethodPost, "/api/v1/auth/register", strings.NewReader(regBody))
+	regReq.Header.Set("Content-Type", "application/json")
+	regRec := httptest.NewRecorder()
+	router.ServeHTTP(regRec, regReq)
+	if regRec.Code != http.StatusCreated {
+		t.Fatalf("register failed: %d", regRec.Code)
+	}
+
+	// 2. Login
+	loginBody := `{"email":"flow@example.com","password":"password123"}`
+	loginReq, _ := http.NewRequest(http.MethodPost, "/api/v1/auth/login", strings.NewReader(loginBody))
+	loginReq.Header.Set("Content-Type", "application/json")
+	loginRec := httptest.NewRecorder()
+	router.ServeHTTP(loginRec, loginReq)
+	if loginRec.Code != http.StatusOK {
+		t.Fatalf("login failed: %d", loginRec.Code)
+	}
+
+	var loginResp handler.LoginResponse
+	_ = json.Unmarshal(loginRec.Body.Bytes(), &loginResp)
+	if loginResp.Token == "" {
+		t.Fatal("expected non-empty token")
+	}
+
+	// 3. Me
+	meReq, _ := http.NewRequest(http.MethodGet, "/api/v1/auth/me", nil)
+	meReq.Header.Set("Authorization", "Bearer "+loginResp.Token)
+	meRec := httptest.NewRecorder()
+	router.ServeHTTP(meRec, meReq)
+	if meRec.Code != http.StatusOK {
+		t.Fatalf("me failed: %d", meRec.Code)
+	}
+
+	var userResp handler.UserResponse
+	_ = json.Unmarshal(meRec.Body.Bytes(), &userResp)
+	if userResp.Email != "flow@example.com" {
+		t.Errorf("expected email 'flow@example.com', got %q", userResp.Email)
+	}
+	if userResp.DisplayName == nil || *userResp.DisplayName != "Flow User" {
+		t.Errorf("expected display name 'Flow User', got %v", userResp.DisplayName)
+	}
+}
+

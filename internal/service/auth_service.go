@@ -7,7 +7,9 @@ import (
 	"net/mail"
 	"strings"
 
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+	"github.com/hoangduc102/fintrack/internal/auth"
 	"github.com/hoangduc102/fintrack/internal/domain"
 	"github.com/hoangduc102/fintrack/internal/repository"
 )
@@ -19,14 +21,34 @@ type RegisterInput struct {
 	DisplayName *string
 }
 
+// LoginInput holds the credentials required for user authentication.
+type LoginInput struct {
+	Email    string
+	Password string
+}
+
+// LoginOutput contains the JWT access token and authenticated user details.
+type LoginOutput struct {
+	Token string
+	User  *domain.User
+}
+
 // AuthService coordinates user registration, authentication, and password management.
 type AuthService struct {
-	userRepo repository.UserRepository
+	userRepo   repository.UserRepository
+	jwtManager *auth.JWTManager
 }
 
 // NewAuthService creates a new AuthService instance.
-func NewAuthService(userRepo repository.UserRepository) *AuthService {
-	return &AuthService{userRepo: userRepo}
+func NewAuthService(userRepo repository.UserRepository, jwtManagers ...*auth.JWTManager) *AuthService {
+	var jm *auth.JWTManager
+	if len(jwtManagers) > 0 && jwtManagers[0] != nil {
+		jm = jwtManagers[0]
+	}
+	return &AuthService{
+		userRepo:   userRepo,
+		jwtManager: jm,
+	}
 }
 
 // Register validates user input, hashes the password, checks uniqueness,
@@ -99,4 +121,43 @@ func (s *AuthService) Register(ctx context.Context, input RegisterInput) (*domai
 	}
 
 	return user, nil
+}
+
+// Login verifies credentials against stored bcrypt hash and returns a 24-hour JWT token.
+func (s *AuthService) Login(ctx context.Context, input LoginInput) (*LoginOutput, error) {
+	normalizedEmail := strings.ToLower(strings.TrimSpace(input.Email))
+	if normalizedEmail == "" || input.Password == "" {
+		return nil, domain.ErrInvalidCredentials
+	}
+
+	user, err := s.userRepo.FindByEmail(ctx, normalizedEmail)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil, domain.ErrInvalidCredentials
+		}
+		return nil, fmt.Errorf("failed to query user: %w", err)
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(input.Password)); err != nil {
+		return nil, domain.ErrInvalidCredentials
+	}
+
+	if s.jwtManager == nil {
+		return nil, errors.New("jwt manager is not configured")
+	}
+
+	token, err := s.jwtManager.Generate(user.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate token: %w", err)
+	}
+
+	return &LoginOutput{
+		Token: token,
+		User:  user,
+	}, nil
+}
+
+// GetProfile retrieves user account details by ID.
+func (s *AuthService) GetProfile(ctx context.Context, userID uuid.UUID) (*domain.User, error) {
+	return s.userRepo.FindByID(ctx, userID)
 }

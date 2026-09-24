@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/hoangduc102/fintrack/internal/auth"
 	"github.com/hoangduc102/fintrack/internal/config"
 	"github.com/hoangduc102/fintrack/internal/handler"
 	"github.com/hoangduc102/fintrack/internal/repository"
@@ -19,6 +20,7 @@ type Server struct {
 	httpServer  *http.Server
 	cfg         *config.Config
 	db          *sql.DB
+	jwtManager  *auth.JWTManager
 	authHandler *handler.AuthHandler
 }
 
@@ -29,6 +31,13 @@ type Option func(*Server)
 func WithDB(db *sql.DB) Option {
 	return func(s *Server) {
 		s.db = db
+	}
+}
+
+// WithJWTManager sets the JWTManager instance for token authentication.
+func WithJWTManager(jm *auth.JWTManager) Option {
+	return func(s *Server) {
+		s.jwtManager = jm
 	}
 }
 
@@ -48,13 +57,17 @@ func New(cfg *config.Config, opts ...Option) *Server {
 		opt(s)
 	}
 
+	if s.jwtManager == nil {
+		s.jwtManager = auth.NewJWTManager(cfg.JWTSecret, 24*time.Hour)
+	}
+
 	if s.authHandler == nil && s.db != nil {
 		userRepo := repository.NewPostgresUserRepository(s.db)
-		authService := service.NewAuthService(userRepo)
+		authService := service.NewAuthService(userRepo, s.jwtManager)
 		s.authHandler = handler.NewAuthHandler(authService)
 	}
 
-	router := NewRouter(cfg, s.authHandler)
+	router := NewRouter(cfg, s.authHandler, s.jwtManager)
 	s.httpServer = &http.Server{
 		Addr:    ":" + cfg.Port,
 		Handler: router,

@@ -4,12 +4,13 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hoangduc102/fintrack/internal/auth"
 	"github.com/hoangduc102/fintrack/internal/config"
 	"github.com/hoangduc102/fintrack/internal/handler"
 )
 
-// NewRouter initializes and configures a Gin router based on the provided Config and optional handlers.
-func NewRouter(cfg *config.Config, authHandlers ...*handler.AuthHandler) *gin.Engine {
+// NewRouter initializes and configures a Gin router based on the provided Config and optional dependencies.
+func NewRouter(cfg *config.Config, deps ...interface{}) *gin.Engine {
 	switch cfg.Environment {
 	case "production":
 		gin.SetMode(gin.ReleaseMode)
@@ -34,16 +35,28 @@ func NewRouter(cfg *config.Config, authHandlers ...*handler.AuthHandler) *gin.En
 	})
 
 	var authHandler *handler.AuthHandler
-	if len(authHandlers) > 0 && authHandlers[0] != nil {
-		authHandler = authHandlers[0]
+	var jwtManager *auth.JWTManager
+
+	for _, dep := range deps {
+		switch d := dep.(type) {
+		case *handler.AuthHandler:
+			authHandler = d
+		case *auth.JWTManager:
+			jwtManager = d
+		}
 	}
 
 	if authHandler != nil {
 		v1 := router.Group("/api/v1")
 		{
-			auth := v1.Group("/auth")
+			authGroup := v1.Group("/auth")
 			{
-				auth.POST("/register", authHandler.Register)
+				authGroup.POST("/register", authHandler.Register)
+				authGroup.POST("/login", authHandler.Login)
+
+				if jwtManager != nil {
+					authGroup.GET("/me", handler.AuthMiddleware(jwtManager), authHandler.Me)
+				}
 			}
 		}
 	}

@@ -5,9 +5,11 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+	"github.com/hoangduc102/fintrack/internal/auth"
 	"github.com/hoangduc102/fintrack/internal/domain"
 	"github.com/hoangduc102/fintrack/internal/service"
 )
@@ -252,3 +254,118 @@ func TestAuthService_Register_DuplicateEmailConflict(t *testing.T) {
 		t.Errorf("expected domain.ErrConflict, got: %v", err)
 	}
 }
+
+func TestAuthService_Login_Success(t *testing.T) {
+	repo := newFakeUserRepository()
+	jwtManager := auth.NewJWTManager("test-secret", 24*time.Hour)
+	authService := service.NewAuthService(repo, jwtManager)
+
+	_, err := authService.Register(context.Background(), service.RegisterInput{
+		Email:    "login@example.com",
+		Password: "correctpassword",
+	})
+	if err != nil {
+		t.Fatalf("failed to register user: %v", err)
+	}
+
+	loginOutput, err := authService.Login(context.Background(), service.LoginInput{
+		Email:    "  Login@Example.COM  ",
+		Password: "correctpassword",
+	})
+	if err != nil {
+		t.Fatalf("login failed: %v", err)
+	}
+
+	if loginOutput.Token == "" {
+		t.Fatal("expected non-empty token")
+	}
+
+	parsedID, err := jwtManager.Validate(loginOutput.Token)
+	if err != nil {
+		t.Fatalf("failed to validate returned token: %v", err)
+	}
+	if parsedID != loginOutput.User.ID {
+		t.Errorf("expected token sub %s, got %s", loginOutput.User.ID, parsedID)
+	}
+}
+
+func TestAuthService_Login_InvalidCredentials(t *testing.T) {
+	repo := newFakeUserRepository()
+	jwtManager := auth.NewJWTManager("test-secret", 24*time.Hour)
+	authService := service.NewAuthService(repo, jwtManager)
+
+	_, err := authService.Register(context.Background(), service.RegisterInput{
+		Email:    "user@example.com",
+		Password: "correctpassword",
+	})
+	if err != nil {
+		t.Fatalf("failed to register user: %v", err)
+	}
+
+	// Case 1: Wrong password
+	_, err = authService.Login(context.Background(), service.LoginInput{
+		Email:    "user@example.com",
+		Password: "wrongpassword",
+	})
+	if err == nil {
+		t.Fatal("expected error for wrong password, got nil")
+	}
+	if !errors.Is(err, domain.ErrInvalidCredentials) && !errors.Is(err, domain.ErrUnauthorized) {
+		t.Errorf("expected unauthorized or invalid credentials error, got: %v", err)
+	}
+
+	// Case 2: User not found
+	_, err = authService.Login(context.Background(), service.LoginInput{
+		Email:    "nonexistent@example.com",
+		Password: "correctpassword",
+	})
+	if err == nil {
+		t.Fatal("expected error for non-existent user, got nil")
+	}
+	if !errors.Is(err, domain.ErrInvalidCredentials) && !errors.Is(err, domain.ErrUnauthorized) {
+		t.Errorf("expected unauthorized or invalid credentials error, got: %v", err)
+	}
+}
+
+func TestAuthService_GetProfile_Success(t *testing.T) {
+	repo := newFakeUserRepository()
+	jwtManager := auth.NewJWTManager("test-secret", 24*time.Hour)
+	authService := service.NewAuthService(repo, jwtManager)
+
+	displayName := "Profile User"
+	user, err := authService.Register(context.Background(), service.RegisterInput{
+		Email:       "profile@example.com",
+		Password:    "correctpassword",
+		DisplayName: &displayName,
+	})
+	if err != nil {
+		t.Fatalf("failed to register user: %v", err)
+	}
+
+	profile, err := authService.GetProfile(context.Background(), user.ID)
+	if err != nil {
+		t.Fatalf("failed to get profile: %v", err)
+	}
+
+	if profile.ID != user.ID {
+		t.Errorf("expected ID %s, got %s", user.ID, profile.ID)
+	}
+	if profile.Email != user.Email {
+		t.Errorf("expected email %s, got %s", user.Email, profile.Email)
+	}
+}
+
+func TestAuthService_GetProfile_NotFound(t *testing.T) {
+	repo := newFakeUserRepository()
+	jwtManager := auth.NewJWTManager("test-secret", 24*time.Hour)
+	authService := service.NewAuthService(repo, jwtManager)
+
+	_, err := authService.GetProfile(context.Background(), uuid.New())
+	if err == nil {
+		t.Fatal("expected error for non-existent user profile, got nil")
+	}
+	if !errors.Is(err, domain.ErrNotFound) {
+		t.Errorf("expected domain.ErrNotFound, got: %v", err)
+	}
+}
+
