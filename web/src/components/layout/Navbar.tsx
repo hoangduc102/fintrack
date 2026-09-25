@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { 
   Wallet, 
@@ -14,6 +14,7 @@ import {
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const handleLogout = () => {
     logout()
@@ -22,6 +23,11 @@ export const Navbar: React.FC = () => {
 
   const displayName = user?.display_name || user?.email?.split('@')[0] || 'User'
   const initials = displayName.slice(0, 2).toUpperCase()
+
+  const isActive = (path: string) => {
+    if (path === '/') return location.pathname === '/'
+    return location.pathname.startsWith(path)
+  }
 
   return (
     <header className="sticky top-0 z-50 backdrop-blur-xl bg-slate-950/80 border-b border-slate-800/80">
@@ -47,24 +53,42 @@ export const Navbar: React.FC = () => {
             <nav className="hidden md:flex items-center gap-1">
               <Link
                 to="/"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-900 transition-colors"
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  isActive('/')
+                    ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-900'
+                }`}
               >
                 <LayoutDashboard className="w-4 h-4 text-emerald-400" />
                 Dashboard
               </Link>
-              <span className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-500 cursor-not-allowed">
-                <Tags className="w-4 h-4" />
+              <Link
+                to="/categories"
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  isActive('/categories')
+                    ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-900'
+                }`}
+              >
+                <Tags className="w-4 h-4 text-emerald-400" />
                 Categories
-              </span>
-              <span className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-500 cursor-not-allowed">
-                <ReceiptText className="w-4 h-4" />
+              </Link>
+              <Link
+                to="/transactions"
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  isActive('/transactions')
+                    ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-900'
+                }`}
+              >
+                <ReceiptText className="w-4 h-4 text-emerald-400" />
                 Transactions
-              </span>
-              <span className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-500 cursor-not-allowed">
+              </Link>
+              <span className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 cursor-not-allowed">
                 <PiggyBank className="w-4 h-4" />
                 Budgets
               </span>
-              <span className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-500 cursor-not-allowed">
+              <span className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 cursor-not-allowed">
                 <BarChart3 className="w-4 h-4" />
                 Analytics
               </span>
@@ -90,7 +114,7 @@ export const Navbar: React.FC = () => {
             <button
               onClick={handleLogout}
               title="Sign out of your account"
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all duration-200 cursor-pointer"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all duration-200 cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
               <span className="hidden sm:inline">Logout</span>

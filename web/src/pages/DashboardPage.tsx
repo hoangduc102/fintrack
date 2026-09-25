@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { 
   Sparkles, 
@@ -176,26 +177,38 @@ export const DashboardPage: React.FC = () => {
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 hover:border-emerald-500/40 transition-colors">
-            <div className="text-xs font-semibold text-emerald-400 mb-1">Issue #13</div>
-            <div className="text-sm font-bold text-slate-200">Category CRUD</div>
+          <Link 
+            to="/categories" 
+            className="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 hover:border-emerald-500/50 hover:bg-slate-900/60 transition-all group block"
+          >
+            <div className="flex items-center justify-between text-xs font-semibold text-emerald-400 mb-1">
+              <span>Categories</span>
+              <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">Live</span>
+            </div>
+            <div className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">Category Management</div>
             <div className="text-xs text-slate-400 mt-1">Create, edit, and delete income/expense tags</div>
-          </div>
+          </Link>
 
-          <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 hover:border-emerald-500/40 transition-colors">
-            <div className="text-xs font-semibold text-emerald-400 mb-1">Issue #13</div>
-            <div className="text-sm font-bold text-slate-200">Transaction History</div>
-            <div className="text-xs text-slate-400 mt-1">Paginated filters, date ranges, and sorting</div>
-          </div>
+          <Link 
+            to="/transactions" 
+            className="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 hover:border-emerald-500/50 hover:bg-slate-900/60 transition-all group block"
+          >
+            <div className="flex items-center justify-between text-xs font-semibold text-emerald-400 mb-1">
+              <span>Transactions</span>
+              <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">Live</span>
+            </div>
+            <div className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">Transaction History</div>
+            <div className="text-xs text-slate-400 mt-1">Multi-criteria filtering, pagination, and forms</div>
+          </Link>
 
-          <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 hover:border-emerald-500/40 transition-colors">
-            <div className="text-xs font-semibold text-emerald-400 mb-1">Issue #14</div>
+          <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 opacity-60">
+            <div className="text-xs font-semibold text-amber-400 mb-1">Issue #14</div>
             <div className="text-sm font-bold text-slate-200">Monthly Budgets</div>
             <div className="text-xs text-slate-400 mt-1">Upsert caps & live spending progress bars</div>
           </div>
 
-          <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 hover:border-emerald-500/40 transition-colors">
-            <div className="text-xs font-semibold text-emerald-400 mb-1">Issue #14</div>
+          <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 opacity-60">
+            <div className="text-xs font-semibold text-indigo-400 mb-1">Issue #14</div>
             <div className="text-sm font-bold text-slate-200">Financial Analytics</div>
             <div className="text-xs text-slate-400 mt-1">Category shares & 6-month trend charts</div>
           </div>

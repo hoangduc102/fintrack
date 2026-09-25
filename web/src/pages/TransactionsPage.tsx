@@ -1,0 +1,904 @@
+import React, { useState, useMemo } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { getTransactions, createTransaction, updateTransaction, deleteTransaction } from '../api/transactions'
+import { getCategories } from '../api/categories'
+import { ApiError } from '../api/client'
+import type { 
+  Transaction, 
+  TransactionType, 
+  CreateTransactionInput, 
+  UpdateTransactionInput 
+} from '../api/types'
+import { formatVND, formatDate, getTodayString } from '../utils/format'
+import { 
+  ReceiptText, 
+  Plus, 
+  ChevronLeft, 
+  ChevronRight, 
+  Pencil, 
+  Trash2, 
+  ArrowDownLeft, 
+  ArrowUpRight, 
+  X, 
+  AlertCircle, 
+  Loader2, 
+  CheckCircle2, 
+  RotateCcw
+} from 'lucide-react'
+
+export const TransactionsPage: React.FC = () => {
+  const queryClient = useQueryClient()
+
+  // Filter States
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(20)
+  const [typeFilter, setTypeFilter] = useState<TransactionType | ''>('')
+  const [categoryFilter, setCategoryFilter] = useState<string>('')
+  const [startDate, setStartDate] = useState<string>('')
+  const [endDate, setEndDate] = useState<string>('')
+  const [uncategorized, setUncategorized] = useState<boolean>(false)
+
+  // Modals States
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
+  const [deletingTransaction, setDeletingTransaction] = useState<Transaction | null>(null)
+
+  // Form Fields State
+  const [amount, setAmount] = useState<number | ''>('')
+  const [txType, setTxType] = useState<TransactionType>('EXPENSE')
+  const [categoryId, setCategoryId] = useState<string>('')
+  const [transactionDate, setTransactionDate] = useState<string>(getTodayString())
+  const [description, setDescription] = useState<string>('')
+  const [formError, setFormError] = useState<string | null>(null)
+  const [feedback, setFeedback] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+
+  // Fetch Categories for Dropdowns
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => getCategories(),
+  })
+
+  // Category Lookup Map
+  const categoryMap = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const c of categories) {
+      map.set(c.id, c.name)
+    }
+    return map
+  }, [categories])
+
+  // Filter query parameters
+  const queryFilter = useMemo(() => {
+    return {
+      page,
+      limit,
+      type: typeFilter ? typeFilter : undefined,
+      category_id: !uncategorized && categoryFilter ? categoryFilter : undefined,
+      start_date: startDate ? startDate : undefined,
+      end_date: endDate ? endDate : undefined,
+      uncategorized: uncategorized ? true : undefined,
+    }
+  }, [page, limit, typeFilter, categoryFilter, startDate, endDate, uncategorized])
+
+  // Fetch Transactions Query
+  const { 
+    data: transactionsData, 
+    isLoading, 
+    isFetching, 
+    error: queryError 
+  } = useQuery({
+    queryKey: ['transactions', queryFilter],
+    queryFn: () => getTransactions(queryFilter),
+  })
+
+  // Create Mutation
+  const createMutation = useMutation({
+    mutationFn: (input: CreateTransactionInput) => createTransaction(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] })
+      setIsCreateOpen(false)
+      resetForm()
+      showFeedback('Transaction recorded successfully.')
+    },
+    onError: (err: unknown) => {
+      if (err instanceof ApiError) {
+        setFormError(err.message || 'Failed to create transaction')
+      } else {
+        setFormError('Network error while saving transaction')
+      }
+    },
+  })
+
+  // Update Mutation
+  const updateMutation = useMutation({
+    mutationFn: ({ id, input }: { id: string; input: UpdateTransactionInput }) => updateTransaction(id, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] })
+      setEditingTransaction(null)
+      resetForm()
+      showFeedback('Transaction updated successfully.')
+    },
+    onError: (err: unknown) => {
+      if (err instanceof ApiError) {
+        setFormError(err.message || 'Failed to update transaction')
+      } else {
+        setFormError('Network error while updating transaction')
+      }
+    },
+  })
+
+  // Delete Mutation
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteTransaction(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] })
+      setDeletingTransaction(null)
+      showFeedback('Transaction deleted successfully.')
+    },
+    onError: (err: unknown) => {
+      if (err instanceof ApiError) {
+        setFormError(err.message || 'Failed to delete transaction')
+      } else {
+        setFormError('Network error while deleting transaction')
+      }
+    },
+  })
+
+  const showFeedback = (message: string, type: 'success' | 'error' = 'success') => {
+    setFeedback({ message, type })
+    setTimeout(() => setFeedback(null), 4000)
+  }
+
+  const resetForm = () => {
+    setAmount('')
+    setTxType('EXPENSE')
+    setCategoryId('')
+    setTransactionDate(getTodayString())
+    setDescription('')
+    setFormError(null)
+  }
+
+  const handleOpenCreate = () => {
+    resetForm()
+    setIsCreateOpen(true)
+  }
+
+  const handleOpenEdit = (tx: Transaction) => {
+    setEditingTransaction(tx)
+    setAmount(tx.amount)
+    setTxType(tx.type)
+    setCategoryId(tx.category_id || '')
+    setTransactionDate(tx.transaction_date)
+    setDescription(tx.description || '')
+    setFormError(null)
+  }
+
+  const handleOpenDelete = (tx: Transaction) => {
+    setDeletingTransaction(tx)
+    setFormError(null)
+  }
+
+  const handleSaveCreate = (e: React.FormEvent) => {
+    e.preventDefault()
+    setFormError(null)
+
+    if (amount === '' || amount <= 0) {
+      setFormError('Amount must be greater than 0 VND')
+      return
+    }
+    if (!transactionDate) {
+      setFormError('Transaction date is required')
+      return
+    }
+
+    createMutation.mutate({
+      amount: Number(amount),
+      type: txType,
+      category_id: categoryId || null,
+      transaction_date: transactionDate,
+      description: description.trim() || null,
+    })
+  }
+
+  const handleSaveEdit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingTransaction) return
+    setFormError(null)
+
+    if (amount === '' || amount <= 0) {
+      setFormError('Amount must be greater than 0 VND')
+      return
+    }
+    if (!transactionDate) {
+      setFormError('Transaction date is required')
+      return
+    }
+
+    updateMutation.mutate({
+      id: editingTransaction.id,
+      input: {
+        amount: Number(amount),
+        type: txType,
+        category_id: categoryId || null,
+        transaction_date: transactionDate,
+        description: description.trim() || null,
+      },
+    })
+  }
+
+  const handleResetFilters = () => {
+    setTypeFilter('')
+    setCategoryFilter('')
+    setStartDate('')
+    setEndDate('')
+    setUncategorized(false)
+    setPage(1)
+  }
+
+  const hasActiveFilters = Boolean(typeFilter || categoryFilter || startDate || endDate || uncategorized)
+
+  // Filter category options in modals according to active modal txType
+  const modalCategoryOptions = useMemo(() => {
+    return categories.filter((c) => c.type === txType)
+  }, [categories, txType])
+
+  const pagination = transactionsData?.pagination
+  const items = transactionsData?.items || []
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-300">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400">
+              <ReceiptText className="w-5 h-5" />
+            </div>
+            Transactions
+          </h1>
+          <p className="mt-1 text-sm text-slate-400">
+            View, filter, and record all financial transactions with exact VND integer precision
+          </p>
+        </div>
+
+        <button
+          onClick={handleOpenCreate}
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-950 bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 shadow-lg shadow-emerald-500/20 transition-all cursor-pointer"
+        >
+          <Plus className="w-4 h-4" />
+          Record Transaction
+        </button>
+      </div>
+
+      {/* Floating feedback alert */}
+      {feedback && (
+        <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-4 flex items-center gap-3 text-emerald-300 animate-in fade-in">
+          <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+          <span className="text-sm font-medium">{feedback.message}</span>
+        </div>
+      )}
+
+      {/* Filter Toolbar */}
+      <div className="rounded-2xl bg-slate-900/60 border border-slate-800 p-5 space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {/* Type Toggle Tabs */}
+          <div className="flex items-center p-1 bg-slate-950 rounded-xl border border-slate-800 w-fit">
+            <button
+              onClick={() => { setTypeFilter(''); setPage(1); }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                typeFilter === '' ? 'bg-slate-800 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              All Types
+            </button>
+            <button
+              onClick={() => { setTypeFilter('EXPENSE'); setPage(1); }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                typeFilter === 'EXPENSE' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <ArrowDownLeft className="w-3.5 h-3.5 text-rose-400" />
+              Expenses
+            </button>
+            <button
+              onClick={() => { setTypeFilter('INCOME'); setPage(1); }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                typeFilter === 'INCOME' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <ArrowUpRight className="w-3.5 h-3.5 text-emerald-400" />
+              Income
+            </button>
+          </div>
+
+          {/* Reset Filters CTA */}
+          {hasActiveFilters && (
+            <button
+              onClick={handleResetFilters}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-rose-400 transition-colors cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              Reset all filters
+            </button>
+          )}
+        </div>
+
+        {/* Granular Filters Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2 border-t border-slate-800/80">
+          {/* Start Date */}
+          <div>
+            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+              Start Date
+            </label>
+            <div className="relative">
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => { setStartDate(e.target.value); setPage(1); }}
+                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              />
+            </div>
+          </div>
+
+          {/* End Date */}
+          <div>
+            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+              End Date
+            </label>
+            <div className="relative">
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => { setEndDate(e.target.value); setPage(1); }}
+                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              />
+            </div>
+          </div>
+
+          {/* Category Dropdown */}
+          <div>
+            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+              Category
+            </label>
+            <select
+              disabled={uncategorized}
+              value={categoryFilter}
+              onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }}
+              className={`w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 ${
+                uncategorized ? 'opacity-40 cursor-not-allowed' : ''
+              }`}
+            >
+              <option value="">All Categories</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name} ({c.type})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Uncategorized Checkbox */}
+          <div className="flex items-end pb-2">
+            <label className="flex items-center gap-2.5 cursor-pointer text-xs font-medium text-slate-300 hover:text-white select-none">
+              <input
+                type="checkbox"
+                checked={uncategorized}
+                onChange={(e) => {
+                  setUncategorized(e.target.checked)
+                  if (e.target.checked) {
+                    setCategoryFilter('')
+                  }
+                  setPage(1)
+                }}
+                className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-emerald-500 focus:ring-emerald-500/40"
+              />
+              <span>Uncategorized only</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {/* Transactions Table Card */}
+      <div className="rounded-2xl bg-slate-900/60 border border-slate-800 overflow-hidden shadow-xl">
+        {queryError ? (
+          <div className="p-8 text-center text-rose-400">
+            <AlertCircle className="w-8 h-8 mx-auto mb-2" />
+            <p className="text-sm font-medium">Failed to load transactions.</p>
+          </div>
+        ) : isLoading ? (
+          <div className="py-20 flex flex-col items-center justify-center text-slate-400">
+            <Loader2 className="w-8 h-8 text-emerald-400 animate-spin mb-3" />
+            <p className="text-sm">Fetching transactions...</p>
+          </div>
+        ) : items.length === 0 ? (
+          <div className="py-20 text-center text-slate-400">
+            <div className="w-12 h-12 rounded-2xl bg-slate-800/50 border border-slate-700/50 flex items-center justify-center mx-auto mb-3 text-slate-400">
+              <ReceiptText className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-semibold text-slate-300">No transactions found</h3>
+            <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+              {hasActiveFilters
+                ? 'Try adjusting or resetting your filter criteria above.'
+                : 'Click "Record Transaction" above to log your first income or expense.'}
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-950/80 text-[11px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-800">
+                <tr>
+                  <th className="py-3.5 px-4 sm:px-6">Date</th>
+                  <th className="py-3.5 px-4">Description</th>
+                  <th className="py-3.5 px-4">Category</th>
+                  <th className="py-3.5 px-4">Type</th>
+                  <th className="py-3.5 px-4 text-right">Amount (VND)</th>
+                  <th className="py-3.5 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {items.map((tx) => {
+                  const isIncome = tx.type === 'INCOME'
+                  const catName = tx.category_id ? categoryMap.get(tx.category_id) || 'Unknown' : 'Uncategorized'
+
+                  return (
+                    <tr key={tx.id} className="hover:bg-slate-800/30 transition-colors group">
+                      <td className="py-3.5 px-4 sm:px-6 whitespace-nowrap text-xs font-medium text-slate-300">
+                        {formatDate(tx.transaction_date)}
+                      </td>
+                      <td className="py-3.5 px-4 max-w-xs truncate text-xs text-slate-200">
+                        {tx.description ? tx.description : <span className="text-slate-400 italic">No description</span>}
+                      </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium ${
+                            tx.category_id
+                              ? 'bg-slate-800 text-slate-200 border border-slate-700'
+                              : 'bg-slate-800/40 text-slate-400 border border-slate-800 italic'
+                          }`}
+                        >
+                          {catName}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span
+                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
+                            isIncome
+                              ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                              : 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
+                          }`}
+                        >
+                          {isIncome ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownLeft className="w-3 h-3" />}
+                          {tx.type}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap font-mono font-bold text-sm">
+                        <span className={isIncome ? 'text-emerald-400' : 'text-slate-200'}>
+                          {isIncome ? '+' : '-'} {formatVND(tx.amount)}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => handleOpenEdit(tx)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer"
+                            title="Edit transaction"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleOpenDelete(tx)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                            title="Delete transaction"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Pagination Toolbar */}
+        {pagination && pagination.total_items > 0 && (
+          <div className="p-4 bg-slate-950/80 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+            <div className="flex items-center gap-4">
+              <span>
+                Showing <strong className="text-white">{(pagination.page - 1) * pagination.limit + 1}</strong> to{' '}
+                <strong className="text-white">
+                  {Math.min(pagination.page * pagination.limit, pagination.total_items)}
+                </strong>{' '}
+                of <strong className="text-white">{pagination.total_items}</strong> records
+              </span>
+
+              {/* Limit Selector */}
+              <div className="flex items-center gap-1.5">
+                <span>Per page:</span>
+                <select
+                  value={limit}
+                  onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}
+                  className="px-2 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-200 text-xs focus:outline-none"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Navigation Buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                disabled={page <= 1 || isFetching}
+                onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                className="px-3 py-1.5 rounded-xl border border-slate-800 bg-slate-900 text-slate-300 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                Previous
+              </button>
+
+              <span className="px-3 py-1 font-medium text-slate-200">
+                Page {pagination.page} of {pagination.total_pages || 1}
+              </span>
+
+              <button
+                disabled={page >= pagination.total_pages || isFetching}
+                onClick={() => setPage((p) => p + 1)}
+                className="px-3 py-1.5 rounded-xl border border-slate-800 bg-slate-900 text-slate-300 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                Next
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* CREATE MODAL */}
+      {isCreateOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+              <h3 className="text-lg font-bold text-white">Record Transaction</h3>
+              <button
+                onClick={() => setIsCreateOpen(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {formError && (
+              <div className="mt-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs font-medium text-rose-300 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-400" />
+                <span>{formError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveCreate} className="mt-4 space-y-4">
+              {/* Type Switcher */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                  Transaction Type
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => { setTxType('EXPENSE'); setCategoryId(''); }}
+                    className={`py-2 px-3 rounded-xl text-xs font-semibold border flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      txType === 'EXPENSE'
+                        ? 'bg-rose-500/20 border-rose-500/50 text-rose-300'
+                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <ArrowDownLeft className="w-4 h-4" />
+                    Expense
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setTxType('INCOME'); setCategoryId(''); }}
+                    className={`py-2 px-3 rounded-xl text-xs font-semibold border flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      txType === 'INCOME'
+                        ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
+                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <ArrowUpRight className="w-4 h-4" />
+                    Income
+                  </button>
+                </div>
+              </div>
+
+              {/* Amount (VND) */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                  Amount (VND) <span className="text-emerald-400">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    required
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                    placeholder="e.g. 50000"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
+                  />
+                  <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-xs font-semibold text-slate-400">
+                    VND
+                  </div>
+                </div>
+                {typeof amount === 'number' && amount > 0 && (
+                  <p className="mt-1 text-xs text-emerald-400/90 font-medium">
+                    Formatted: {formatVND(amount)}
+                  </p>
+                )}
+              </div>
+
+              {/* Date */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                  Date <span className="text-emerald-400">*</span>
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={transactionDate}
+                  onChange={(e) => setTransactionDate(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                  Category <span className="text-slate-400 font-normal">(optional)</span>
+                </label>
+                <select
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="">None (Uncategorized)</option>
+                  {modalCategoryOptions.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                <span className="block mt-1 text-[11px] text-slate-400">
+                  Showing {txType.toLowerCase()} categories only
+                </span>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                  Description <span className="text-slate-400 font-normal">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="e.g. Lunch with team, Freelance invoice #4"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateOpen(false)}
+                  className="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={createMutation.isPending}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {createMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Save Transaction
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT MODAL */}
+      {editingTransaction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+              <h3 className="text-lg font-bold text-white">Edit Transaction</h3>
+              <button
+                onClick={() => setEditingTransaction(null)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {formError && (
+              <div className="mt-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs font-medium text-rose-300 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-400" />
+                <span>{formError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveEdit} className="mt-4 space-y-4">
+              {/* Type Switcher */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                  Transaction Type
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => { setTxType('EXPENSE'); setCategoryId(''); }}
+                    className={`py-2 px-3 rounded-xl text-xs font-semibold border flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      txType === 'EXPENSE'
+                        ? 'bg-rose-500/20 border-rose-500/50 text-rose-300'
+                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <ArrowDownLeft className="w-4 h-4" />
+                    Expense
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setTxType('INCOME'); setCategoryId(''); }}
+                    className={`py-2 px-3 rounded-xl text-xs font-semibold border flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      txType === 'INCOME'
+                        ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
+                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <ArrowUpRight className="w-4 h-4" />
+                    Income
+                  </button>
+                </div>
+              </div>
+
+              {/* Amount (VND) */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                  Amount (VND) <span className="text-emerald-400">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    required
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
+                  />
+                  <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-xs font-semibold text-slate-400">
+                    VND
+                  </div>
+                </div>
+                {typeof amount === 'number' && amount > 0 && (
+                  <p className="mt-1 text-xs text-emerald-400/90 font-medium">
+                    Formatted: {formatVND(amount)}
+                  </p>
+                )}
+              </div>
+
+              {/* Date */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                  Date <span className="text-emerald-400">*</span>
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={transactionDate}
+                  onChange={(e) => setTransactionDate(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                  Category <span className="text-slate-400 font-normal">(optional)</span>
+                </label>
+                <select
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="">None (Uncategorized)</option>
+                  {modalCategoryOptions.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                  Description <span className="text-slate-400 font-normal">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setEditingTransaction(null)}
+                  className="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updateMutation.isPending}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {updateMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE CONFIRMATION MODAL */}
+      {deletingTransaction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+            <div className="flex items-center gap-3 text-rose-400 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <h3 className="text-lg font-bold text-white">Delete Transaction</h3>
+            </div>
+
+            <p className="text-sm text-slate-300 mb-4">
+              Are you sure you want to delete this {deletingTransaction.type.toLowerCase()} of{' '}
+              <strong className="text-white">{formatVND(deletingTransaction.amount)}</strong> on{' '}
+              <strong className="text-white">{formatDate(deletingTransaction.transaction_date)}</strong>?
+            </p>
+
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setDeletingTransaction(null)}
+                className="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deleteMutation.isPending}
+                onClick={() => deleteMutation.mutate(deletingTransaction.id)}
+                className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-rose-600 hover:bg-rose-500 transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {deleteMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                Delete Record
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

@@ -7,6 +7,8 @@ import { Layout } from './components/layout/Layout'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { DashboardPage } from './pages/DashboardPage'
+import { CategoriesPage } from './pages/CategoriesPage'
+import { TransactionsPage } from './pages/TransactionsPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 
 const queryClient = new QueryClient({
@@ -36,6 +38,28 @@ export const App: React.FC = () => {
                 <ProtectedRoute>
                   <Layout>
                     <DashboardPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/categories"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <CategoriesPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/transactions"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <TransactionsPage />
                   </Layout>
                 </ProtectedRoute>
               }
