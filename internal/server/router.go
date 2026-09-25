@@ -35,20 +35,23 @@ func NewRouter(cfg *config.Config, deps ...interface{}) *gin.Engine {
 	})
 
 	var authHandler *handler.AuthHandler
+	var categoryHandler *handler.CategoryHandler
 	var jwtManager *auth.JWTManager
 
 	for _, dep := range deps {
 		switch d := dep.(type) {
 		case *handler.AuthHandler:
 			authHandler = d
+		case *handler.CategoryHandler:
+			categoryHandler = d
 		case *auth.JWTManager:
 			jwtManager = d
 		}
 	}
 
-	if authHandler != nil {
-		v1 := router.Group("/api/v1")
-		{
+	v1 := router.Group("/api/v1")
+	{
+		if authHandler != nil {
 			authGroup := v1.Group("/auth")
 			{
 				authGroup.POST("/register", authHandler.Register)
@@ -57,6 +60,16 @@ func NewRouter(cfg *config.Config, deps ...interface{}) *gin.Engine {
 				if jwtManager != nil {
 					authGroup.GET("/me", handler.AuthMiddleware(jwtManager), authHandler.Me)
 				}
+			}
+		}
+
+		if categoryHandler != nil && jwtManager != nil {
+			catGroup := v1.Group("/categories", handler.AuthMiddleware(jwtManager))
+			{
+				catGroup.GET("", categoryHandler.List)
+				catGroup.POST("", categoryHandler.Create)
+				catGroup.PUT("/:id", categoryHandler.Update)
+				catGroup.DELETE("/:id", categoryHandler.Delete)
 			}
 		}
 	}

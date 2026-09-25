@@ -195,3 +195,126 @@ func TestLoginAndMeRoute(t *testing.T) {
 	}
 }
 
+type fakeCategoryRepoForRouter struct {
+	categories map[uuid.UUID]*domain.Category
+}
+
+func (f *fakeCategoryRepoForRouter) Create(ctx context.Context, category *domain.Category) error {
+	category.ID = uuid.New()
+	category.CreatedAt = time.Now().UTC()
+	category.UpdatedAt = category.CreatedAt
+	f.categories[category.ID] = category
+	return nil
+}
+
+func (f *fakeCategoryRepoForRouter) FindByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*domain.Category, error) {
+	c, ok := f.categories[id]
+	if !ok || c.UserID != userID {
+		return nil, domain.ErrNotFound
+	}
+	return c, nil
+}
+
+func (f *fakeCategoryRepoForRouter) FindByUserAndType(ctx context.Context, userID uuid.UUID, categoryType *domain.CategoryType) ([]domain.Category, error) {
+	var result []domain.Category
+	for _, c := range f.categories {
+		if c.UserID == userID {
+			if categoryType == nil || c.Type == *categoryType {
+				result = append(result, *c)
+			}
+		}
+	}
+	return result, nil
+}
+
+func (f *fakeCategoryRepoForRouter) Update(ctx context.Context, category *domain.Category) error {
+	c, ok := f.categories[category.ID]
+	if !ok || c.UserID != category.UserID {
+		return domain.ErrNotFound
+	}
+	c.Name = category.Name
+	c.UpdatedAt = time.Now().UTC()
+	return nil
+}
+
+func (f *fakeCategoryRepoForRouter) Delete(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
+	c, ok := f.categories[id]
+	if !ok || c.UserID != userID {
+		return domain.ErrNotFound
+	}
+	delete(f.categories, id)
+	return nil
+}
+
+func TestCategoriesRoute(t *testing.T) {
+	cfg := &config.Config{
+		Environment: "test",
+		Port:        "8080",
+	}
+
+	catRepo := &fakeCategoryRepoForRouter{categories: make(map[uuid.UUID]*domain.Category)}
+	catService := service.NewCategoryService(catRepo)
+	catHandler := handler.NewCategoryHandler(catService)
+	jwtManager := auth.NewJWTManager("test-secret", 24*time.Hour)
+
+	router := server.NewRouter(cfg, catHandler, jwtManager)
+
+	userID := uuid.New()
+	token, _ := jwtManager.Generate(userID)
+
+	// 1. Create Category
+	createBody := `{"name":"Groceries","type":"EXPENSE"}`
+	createReq, _ := http.NewRequest(http.MethodPost, "/api/v1/categories", strings.NewReader(createBody))
+	createReq.Header.Set("Authorization", "Bearer "+token)
+	createReq.Header.Set("Content-Type", "application/json")
+	createRec := httptest.NewRecorder()
+	router.ServeHTTP(createRec, createReq)
+	if createRec.Code != http.StatusCreated {
+		t.Fatalf("create category failed: %d, body: %s", createRec.Code, createRec.Body.String())
+	}
+
+	var catResp handler.CategoryResponse
+	if err := json.Unmarshal(createRec.Body.Bytes(), &catResp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+	if catResp.Name != "Groceries" {
+		t.Errorf("expected name 'Groceries', got %q", catResp.Name)
+	}
+
+	// 2. List Categories
+	listReq, _ := http.NewRequest(http.MethodGet, "/api/v1/categories", nil)
+	listReq.Header.Set("Authorization", "Bearer "+token)
+	listRec := httptest.NewRecorder()
+	router.ServeHTTP(listRec, listReq)
+	if listRec.Code != http.StatusOK {
+		t.Fatalf("list categories failed: %d", listRec.Code)
+	}
+
+	var listResp []handler.CategoryResponse
+	if err := json.Unmarshal(listRec.Body.Bytes(), &listResp); err != nil {
+		t.Fatalf("failed to decode list: %v", err)
+	}
+	if len(listResp) != 1 {
+		t.Errorf("expected 1 category, got %d", len(listResp))
+	}
+
+	// 3. Update Category
+	updateBody := `{"name":"Food & Groceries"}`
+	updateReq, _ := http.NewRequest(http.MethodPut, "/api/v1/categories/"+catResp.ID, strings.NewReader(updateBody))
+	updateReq.Header.Set("Authorization", "Bearer "+token)
+	updateReq.Header.Set("Content-Type", "application/json")
+	updateRec := httptest.NewRecorder()
+	router.ServeHTTP(updateRec, updateReq)
+	if updateRec.Code != http.StatusOK {
+		t.Fatalf("update category failed: %d, body: %s", updateRec.Code, updateRec.Body.String())
+	}
+
+	// 4. Delete Category
+	deleteReq, _ := http.NewRequest(http.MethodDelete, "/api/v1/categories/"+catResp.ID, nil)
+	deleteReq.Header.Set("Authorization", "Bearer "+token)
+	deleteRec := httptest.NewRecorder()
+	router.ServeHTTP(deleteRec, deleteReq)
+	if deleteRec.Code != http.StatusNoContent {
+		t.Fatalf("delete category failed: %d", deleteRec.Code)
+	}
+}

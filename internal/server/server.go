@@ -17,11 +17,12 @@ import (
 
 // Server wraps the HTTP server and configuration.
 type Server struct {
-	httpServer  *http.Server
-	cfg         *config.Config
-	db          *sql.DB
-	jwtManager  *auth.JWTManager
-	authHandler *handler.AuthHandler
+	httpServer      *http.Server
+	cfg             *config.Config
+	db              *sql.DB
+	jwtManager      *auth.JWTManager
+	authHandler     *handler.AuthHandler
+	categoryHandler *handler.CategoryHandler
 }
 
 // Option configures Server options.
@@ -48,6 +49,13 @@ func WithAuthHandler(h *handler.AuthHandler) Option {
 	}
 }
 
+// WithCategoryHandler sets the CategoryHandler instance for routing.
+func WithCategoryHandler(h *handler.CategoryHandler) Option {
+	return func(s *Server) {
+		s.categoryHandler = h
+	}
+}
+
 // New creates a configured Server instance.
 func New(cfg *config.Config, opts ...Option) *Server {
 	s := &Server{
@@ -67,7 +75,13 @@ func New(cfg *config.Config, opts ...Option) *Server {
 		s.authHandler = handler.NewAuthHandler(authService)
 	}
 
-	router := NewRouter(cfg, s.authHandler, s.jwtManager)
+	if s.categoryHandler == nil && s.db != nil {
+		catRepo := repository.NewPostgresCategoryRepository(s.db)
+		catService := service.NewCategoryService(catRepo)
+		s.categoryHandler = handler.NewCategoryHandler(catService)
+	}
+
+	router := NewRouter(cfg, s.authHandler, s.categoryHandler, s.jwtManager)
 	s.httpServer = &http.Server{
 		Addr:    ":" + cfg.Port,
 		Handler: router,
