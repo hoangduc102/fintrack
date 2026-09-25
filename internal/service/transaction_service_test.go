@@ -3,12 +3,14 @@ package service_test
 import (
 	"context"
 	"errors"
+	"sort"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/hoangduc102/fintrack/internal/domain"
+	"github.com/hoangduc102/fintrack/internal/repository"
 	"github.com/hoangduc102/fintrack/internal/service"
 )
 
@@ -50,6 +52,69 @@ func (r *fakeTransactionRepository) FindByID(ctx context.Context, id uuid.UUID, 
 	}
 	copied := *tx
 	return &copied, nil
+}
+
+func (r *fakeTransactionRepository) List(ctx context.Context, filter repository.ListTransactionsFilter) (*repository.ListTransactionsResult, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	var matched []domain.Transaction
+	for _, tx := range r.transactions {
+		if tx.UserID != filter.UserID {
+			continue
+		}
+		if filter.StartDate != nil && *filter.StartDate != "" && tx.TransactionDate < *filter.StartDate {
+			continue
+		}
+		if filter.EndDate != nil && *filter.EndDate != "" && tx.TransactionDate > *filter.EndDate {
+			continue
+		}
+		if filter.Type != nil && *filter.Type != "" && tx.Type != *filter.Type {
+			continue
+		}
+		if filter.Uncategorized {
+			if tx.CategoryID != nil {
+				continue
+			}
+		} else if filter.CategoryID != nil && *filter.CategoryID != uuid.Nil {
+			if tx.CategoryID == nil || *tx.CategoryID != *filter.CategoryID {
+				continue
+			}
+		}
+		matched = append(matched, *tx)
+	}
+
+	sort.Slice(matched, func(i, j int) bool {
+		if matched[i].TransactionDate != matched[j].TransactionDate {
+			return matched[i].TransactionDate > matched[j].TransactionDate
+		}
+		if !matched[i].CreatedAt.Equal(matched[j].CreatedAt) {
+			return matched[i].CreatedAt.After(matched[j].CreatedAt)
+		}
+		return matched[i].ID.String() > matched[j].ID.String()
+	})
+
+	totalCount := len(matched)
+	offset := filter.Offset
+	if offset > totalCount {
+		offset = totalCount
+	}
+	end := offset + filter.Limit
+	if end > totalCount {
+		end = totalCount
+	}
+
+	var paginated []domain.Transaction
+	if offset < totalCount {
+		paginated = matched[offset:end]
+	} else {
+		paginated = []domain.Transaction{}
+	}
+
+	return &repository.ListTransactionsResult{
+		Transactions: paginated,
+		TotalCount:   totalCount,
+	}, nil
 }
 
 func (r *fakeTransactionRepository) Update(ctx context.Context, tx *domain.Transaction) error {
@@ -375,5 +440,142 @@ func TestTransactionService_DeleteTransaction(t *testing.T) {
 	err = svc.DeleteTransaction(ctx, tx.ID, user1)
 	if !errors.Is(err, domain.ErrNotFound) {
 		t.Errorf("expected ErrNotFound on second delete, got %v", err)
+	}
+}
+
+func TestTransactionService_ListTransactions_DefaultsAndPagination(t *testing.T) {
+	catRepo := newFakeCategoryRepository()
+	txRepo := newFakeTransactionRepository()
+	svc := service.NewTransactionService(txRepo, catRepo)
+	ctx := context.Background()
+	userID := uuid.New()
+
+	for i := 1; i <= 25; i++ {
+		_, _ = svc.CreateTransaction(ctx, service.CreateTransactionInput{
+			UserID:          userID,
+			Amount:          int64(i * 1000),
+			Type:            domain.TransactionTypeExpense,
+			TransactionDate: "2026-09-25",
+		})
+	}
+
+	// Default page=0, limit=0 should default to page=1, limit=20
+	out1, err := svc.ListTransactions(ctx, service.ListTransactionsInput{
+		UserID: userID,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if out1.Pagination.Page != 1 {
+		t.Errorf("expected page 1, got %d", out1.Pagination.Page)
+	}
+	if out1.Pagination.Limit != 20 {
+		t.Errorf("expected limit 20, got %d", out1.Pagination.Limit)
+	}
+	if out1.Pagination.TotalItems != 25 {
+		t.Errorf("expected total_items 25, got %d", out1.Pagination.TotalItems)
+	}
+	if out1.Pagination.TotalPages != 2 {
+		t.Errorf("expected total_pages 2, got %d", out1.Pagination.TotalPages)
+	}
+	if len(out1.Items) != 20 {
+		t.Errorf("expected 20 items on page 1, got %d", len(out1.Items))
+	}
+
+	// Page 2: limit 20
+	out2, err := svc.ListTransactions(ctx, service.ListTransactionsInput{
+		UserID: userID,
+		Page:   2,
+		Limit:  20,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error on page 2: %v", err)
+	}
+	if len(out2.Items) != 5 {
+		t.Errorf("expected 5 items on page 2, got %d", len(out2.Items))
+	}
+}
+
+func TestTransactionService_ListTransactions_ValidationErrors(t *testing.T) {
+	catRepo := newFakeCategoryRepository()
+	txRepo := newFakeTransactionRepository()
+	svc := service.NewTransactionService(txRepo, catRepo)
+	ctx := context.Background()
+	userID := uuid.New()
+
+	catID := uuid.New()
+	invalidDate := "invalid-date"
+	startDate := "2026-09-25"
+	endDateBeforeStart := "2026-09-20"
+	invalidType := domain.TransactionType("INVALID")
+
+	tests := []struct {
+		name          string
+		input         service.ListTransactionsInput
+		expectedField string
+	}{
+		{
+			name: "limit exceeds 100",
+			input: service.ListTransactionsInput{
+				UserID: userID,
+				Limit:  101,
+			},
+			expectedField: "limit",
+		},
+		{
+			name: "mutually exclusive category_id and uncategorized",
+			input: service.ListTransactionsInput{
+				UserID:        userID,
+				CategoryID:    &catID,
+				Uncategorized: true,
+			},
+			expectedField: "uncategorized",
+		},
+		{
+			name: "invalid start_date format",
+			input: service.ListTransactionsInput{
+				UserID:    userID,
+				StartDate: &invalidDate,
+			},
+			expectedField: "start_date",
+		},
+		{
+			name: "invalid end_date format",
+			input: service.ListTransactionsInput{
+				UserID:  userID,
+				EndDate: &invalidDate,
+			},
+			expectedField: "end_date",
+		},
+		{
+			name: "start_date greater than end_date",
+			input: service.ListTransactionsInput{
+				UserID:    userID,
+				StartDate: &startDate,
+				EndDate:   &endDateBeforeStart,
+			},
+			expectedField: "start_date",
+		},
+		{
+			name: "invalid type",
+			input: service.ListTransactionsInput{
+				UserID: userID,
+				Type:   &invalidType,
+			},
+			expectedField: "type",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := svc.ListTransactions(ctx, tt.input)
+			if err == nil {
+				t.Fatalf("expected validation error on %s, got nil", tt.expectedField)
+			}
+			var valErr domain.ValidationError
+			if !errors.As(err, &valErr) || valErr.Field != tt.expectedField {
+				t.Errorf("expected validation error on %s, got %v", tt.expectedField, err)
+			}
+		})
 	}
 }

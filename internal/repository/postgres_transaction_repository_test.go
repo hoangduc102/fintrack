@@ -224,3 +224,174 @@ func TestPostgresTransactionRepository_CategoryDeletionNullification(t *testing.
 		t.Errorf("expected category_id to be NULL (Uncategorized) after category deletion, got %v", foundAfterCatDelete.CategoryID)
 	}
 }
+
+func TestPostgresTransactionRepository_List_PaginationAndSorting(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+
+	userRepo := repository.NewPostgresUserRepository(db)
+	txRepo := repository.NewPostgresTransactionRepository(db)
+	ctx := context.Background()
+
+	user := createTestUser(t, userRepo)
+
+	dates := []string{"2026-09-20", "2026-09-21", "2026-09-22", "2026-09-23", "2026-09-24"}
+	for _, d := range dates {
+		tx := &domain.Transaction{
+			UserID:          user.ID,
+			Amount:          10000,
+			Type:            domain.TransactionTypeExpense,
+			TransactionDate: d,
+		}
+		if err := txRepo.Create(ctx, tx); err != nil {
+			t.Fatalf("failed to seed transaction: %v", err)
+		}
+	}
+
+	// Page 1: limit 2, offset 0 -> expecting 2026-09-24, 2026-09-23
+	res1, err := txRepo.List(ctx, repository.ListTransactionsFilter{
+		UserID: user.ID,
+		Limit:  2,
+		Offset: 0,
+	})
+	if err != nil {
+		t.Fatalf("failed to list page 1: %v", err)
+	}
+	if res1.TotalCount != 5 {
+		t.Errorf("expected TotalCount 5, got %d", res1.TotalCount)
+	}
+	if len(res1.Transactions) != 2 {
+		t.Fatalf("expected 2 transactions, got %d", len(res1.Transactions))
+	}
+	if res1.Transactions[0].TransactionDate != "2026-09-24" {
+		t.Errorf("expected first item date 2026-09-24, got %s", res1.Transactions[0].TransactionDate)
+	}
+	if res1.Transactions[1].TransactionDate != "2026-09-23" {
+		t.Errorf("expected second item date 2026-09-23, got %s", res1.Transactions[1].TransactionDate)
+	}
+
+	// Page 2: limit 2, offset 2 -> expecting 2026-09-22, 2026-09-21
+	res2, err := txRepo.List(ctx, repository.ListTransactionsFilter{
+		UserID: user.ID,
+		Limit:  2,
+		Offset: 2,
+	})
+	if err != nil {
+		t.Fatalf("failed to list page 2: %v", err)
+	}
+	if res2.TotalCount != 5 {
+		t.Errorf("expected TotalCount 5, got %d", res2.TotalCount)
+	}
+	if len(res2.Transactions) != 2 {
+		t.Fatalf("expected 2 transactions, got %d", len(res2.Transactions))
+	}
+	if res2.Transactions[0].TransactionDate != "2026-09-22" {
+		t.Errorf("expected item date 2026-09-22, got %s", res2.Transactions[0].TransactionDate)
+	}
+	if res2.Transactions[1].TransactionDate != "2026-09-21" {
+		t.Errorf("expected item date 2026-09-21, got %s", res2.Transactions[1].TransactionDate)
+	}
+
+	// Page 3: limit 2, offset 4 -> expecting 2026-09-20
+	res3, err := txRepo.List(ctx, repository.ListTransactionsFilter{
+		UserID: user.ID,
+		Limit:  2,
+		Offset: 4,
+	})
+	if err != nil {
+		t.Fatalf("failed to list page 3: %v", err)
+	}
+	if len(res3.Transactions) != 1 {
+		t.Fatalf("expected 1 transaction on page 3, got %d", len(res3.Transactions))
+	}
+	if res3.Transactions[0].TransactionDate != "2026-09-20" {
+		t.Errorf("expected item date 2026-09-20, got %s", res3.Transactions[0].TransactionDate)
+	}
+}
+
+func TestPostgresTransactionRepository_List_Filters(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+
+	userRepo := repository.NewPostgresUserRepository(db)
+	catRepo := repository.NewPostgresCategoryRepository(db)
+	txRepo := repository.NewPostgresTransactionRepository(db)
+	ctx := context.Background()
+
+	user1 := createTestUser(t, userRepo)
+	user2 := createTestUser(t, userRepo)
+
+	catExpense := &domain.Category{UserID: user1.ID, Name: "Dining", Type: domain.CategoryTypeExpense}
+	_ = catRepo.Create(ctx, catExpense)
+
+	catIncome := &domain.Category{UserID: user1.ID, Name: "Salary", Type: domain.CategoryTypeIncome}
+	_ = catRepo.Create(ctx, catIncome)
+
+	// User 1 transactions
+	// tx1: Expense, with category, 2026-09-20
+	_ = txRepo.Create(ctx, &domain.Transaction{UserID: user1.ID, Amount: 50000, Type: domain.TransactionTypeExpense, CategoryID: &catExpense.ID, TransactionDate: "2026-09-20"})
+	// tx2: Expense, uncategorized, 2026-09-22
+	_ = txRepo.Create(ctx, &domain.Transaction{UserID: user1.ID, Amount: 30000, Type: domain.TransactionTypeExpense, CategoryID: nil, TransactionDate: "2026-09-22"})
+	// tx3: Income, with category, 2026-09-23
+	_ = txRepo.Create(ctx, &domain.Transaction{UserID: user1.ID, Amount: 1000000, Type: domain.TransactionTypeIncome, CategoryID: &catIncome.ID, TransactionDate: "2026-09-23"})
+
+	// User 2 transaction
+	_ = txRepo.Create(ctx, &domain.Transaction{UserID: user2.ID, Amount: 99999, Type: domain.TransactionTypeExpense, TransactionDate: "2026-09-22"})
+
+	// 1. Date Range Filter: 2026-09-21 to 2026-09-23 -> tx2 and tx3 (2 items)
+	startDate := "2026-09-21"
+	endDate := "2026-09-23"
+	resDate, err := txRepo.List(ctx, repository.ListTransactionsFilter{
+		UserID:    user1.ID,
+		StartDate: &startDate,
+		EndDate:   &endDate,
+		Limit:     10,
+	})
+	if err != nil {
+		t.Fatalf("failed to list by date range: %v", err)
+	}
+	if resDate.TotalCount != 2 {
+		t.Errorf("expected 2 items for date range, got %d", resDate.TotalCount)
+	}
+
+	// 2. Type Filter: INCOME -> tx3 (1 item)
+	incType := domain.TransactionTypeIncome
+	resType, err := txRepo.List(ctx, repository.ListTransactionsFilter{
+		UserID: user1.ID,
+		Type:   &incType,
+		Limit:  10,
+	})
+	if err != nil {
+		t.Fatalf("failed to list by type: %v", err)
+	}
+	if resType.TotalCount != 1 || resType.Transactions[0].Type != domain.TransactionTypeIncome {
+		t.Errorf("expected 1 income transaction, got %+v", resType)
+	}
+
+	// 3. Category Filter: catExpense -> tx1 (1 item)
+	resCat, err := txRepo.List(ctx, repository.ListTransactionsFilter{
+		UserID:     user1.ID,
+		CategoryID: &catExpense.ID,
+		Limit:      10,
+	})
+	if err != nil {
+		t.Fatalf("failed to list by category: %v", err)
+	}
+	if resCat.TotalCount != 1 || resCat.Transactions[0].CategoryID == nil || *resCat.Transactions[0].CategoryID != catExpense.ID {
+		t.Errorf("expected 1 transaction for catExpense, got %+v", resCat)
+	}
+
+	// 4. Uncategorized Filter: true -> tx2 (1 item)
+	resUncat, err := txRepo.List(ctx, repository.ListTransactionsFilter{
+		UserID:        user1.ID,
+		Uncategorized: true,
+		Limit:         10,
+	})
+	if err != nil {
+		t.Fatalf("failed to list uncategorized: %v", err)
+	}
+	if resUncat.TotalCount != 1 || resUncat.Transactions[0].CategoryID != nil {
+		t.Errorf("expected 1 uncategorized transaction, got %+v", resUncat)
+	}
+}
+

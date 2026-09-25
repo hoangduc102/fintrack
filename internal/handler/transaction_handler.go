@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -50,6 +51,20 @@ type TransactionResponse struct {
 	Description     *string `json:"description,omitempty"`
 	CreatedAt       string  `json:"created_at"`
 	UpdatedAt       string  `json:"updated_at"`
+}
+
+// PaginatedTransactionsResponse defines the response envelope for listing transactions.
+type PaginatedTransactionsResponse struct {
+	Items      []TransactionResponse `json:"items"`
+	Pagination PaginationResponse    `json:"pagination"`
+}
+
+// PaginationResponse defines the pagination metadata in the response.
+type PaginationResponse struct {
+	Page       int `json:"page"`
+	Limit      int `json:"limit"`
+	TotalItems int `json:"total_items"`
+	TotalPages int `json:"total_pages"`
 }
 
 func toTransactionResponse(tx *domain.Transaction) TransactionResponse {
@@ -341,4 +356,155 @@ func (h *TransactionHandler) Delete(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+// List handles GET /api/v1/transactions.
+func (h *TransactionHandler) List(c *gin.Context) {
+	userID, err := GetUserID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": gin.H{
+				"code":    "UNAUTHORIZED",
+				"message": "unauthorized",
+			},
+		})
+		return
+	}
+
+	page := 1
+	if pStr := c.Query("page"); pStr != "" {
+		p, err := strconv.Atoi(pStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": gin.H{
+					"code":    "VALIDATION_ERROR",
+					"message": "page must be an integer",
+					"fields": gin.H{
+						"page": "page must be an integer",
+					},
+				},
+			})
+			return
+		}
+		page = p
+	}
+
+	limit := 20
+	if lStr := c.Query("limit"); lStr != "" {
+		l, err := strconv.Atoi(lStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": gin.H{
+					"code":    "VALIDATION_ERROR",
+					"message": "limit must be an integer",
+					"fields": gin.H{
+						"limit": "limit must be an integer",
+					},
+				},
+			})
+			return
+		}
+		limit = l
+	}
+
+	var startDate *string
+	if s := c.Query("start_date"); s != "" {
+		startDate = &s
+	}
+
+	var endDate *string
+	if e := c.Query("end_date"); e != "" {
+		endDate = &e
+	}
+
+	var txType *domain.TransactionType
+	if t := c.Query("type"); t != "" {
+		parsedType := domain.TransactionType(t)
+		txType = &parsedType
+	}
+
+	var categoryID *uuid.UUID
+	if catIDStr := c.Query("category_id"); catIDStr != "" {
+		parsed, err := uuid.Parse(catIDStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": gin.H{
+					"code":    "VALIDATION_ERROR",
+					"message": "invalid category_id UUID",
+					"fields": gin.H{
+						"category_id": "invalid category_id UUID",
+					},
+				},
+			})
+			return
+		}
+		categoryID = &parsed
+	}
+
+	uncategorized := false
+	if uncStr := c.Query("uncategorized"); uncStr != "" {
+		val, err := strconv.ParseBool(uncStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": gin.H{
+					"code":    "VALIDATION_ERROR",
+					"message": "uncategorized must be a boolean",
+					"fields": gin.H{
+						"uncategorized": "uncategorized must be a boolean",
+					},
+				},
+			})
+			return
+		}
+		uncategorized = val
+	}
+
+	out, err := h.txService.ListTransactions(c.Request.Context(), service.ListTransactionsInput{
+		UserID:        userID,
+		Page:          page,
+		Limit:         limit,
+		StartDate:     startDate,
+		EndDate:       endDate,
+		Type:          txType,
+		CategoryID:    categoryID,
+		Uncategorized: uncategorized,
+	})
+	if err != nil {
+		var valErr domain.ValidationError
+		if errors.As(err, &valErr) {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": gin.H{
+					"code":    "VALIDATION_ERROR",
+					"message": valErr.Message,
+					"fields": gin.H{
+						valErr.Field: valErr.Message,
+					},
+				},
+			})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": gin.H{
+				"code":    "INTERNAL_ERROR",
+				"message": "failed to list transactions",
+			},
+		})
+		return
+	}
+
+	items := make([]TransactionResponse, 0, len(out.Items))
+	for i := range out.Items {
+		items = append(items, toTransactionResponse(&out.Items[i]))
+	}
+
+	c.JSON(http.StatusOK, PaginatedTransactionsResponse{
+		Items: items,
+		Pagination: PaginationResponse{
+			Page:       out.Pagination.Page,
+			Limit:      out.Pagination.Limit,
+			TotalItems: out.Pagination.TotalItems,
+			TotalPages: out.Pagination.TotalPages,
+		},
+	})
 }

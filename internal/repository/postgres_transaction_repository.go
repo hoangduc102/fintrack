@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -60,6 +61,89 @@ func (r *PostgresTransactionRepository) FindByID(ctx context.Context, id uuid.UU
 		return nil, fmt.Errorf("failed to find transaction by id: %w", err)
 	}
 	return &tx, nil
+}
+
+// List retrieves transactions for a user according to the provided filters, limit, and offset, along with total count.
+func (r *PostgresTransactionRepository) List(ctx context.Context, filter ListTransactionsFilter) (*ListTransactionsResult, error) {
+	whereClauses := []string{"user_id = $1"}
+	args := []interface{}{filter.UserID}
+	argIdx := 2
+
+	if filter.StartDate != nil && *filter.StartDate != "" {
+		whereClauses = append(whereClauses, fmt.Sprintf("transaction_date >= $%d", argIdx))
+		args = append(args, *filter.StartDate)
+		argIdx++
+	}
+
+	if filter.EndDate != nil && *filter.EndDate != "" {
+		whereClauses = append(whereClauses, fmt.Sprintf("transaction_date <= $%d", argIdx))
+		args = append(args, *filter.EndDate)
+		argIdx++
+	}
+
+	if filter.Type != nil && *filter.Type != "" {
+		whereClauses = append(whereClauses, fmt.Sprintf("type = $%d", argIdx))
+		args = append(args, *filter.Type)
+		argIdx++
+	}
+
+	if filter.Uncategorized {
+		whereClauses = append(whereClauses, "category_id IS NULL")
+	} else if filter.CategoryID != nil && *filter.CategoryID != uuid.Nil {
+		whereClauses = append(whereClauses, fmt.Sprintf("category_id = $%d", argIdx))
+		args = append(args, *filter.CategoryID)
+		argIdx++
+	}
+
+	whereSQL := strings.Join(whereClauses, " AND ")
+
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM transactions WHERE %s", whereSQL)
+	var totalCount int
+	if err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&totalCount); err != nil {
+		return nil, fmt.Errorf("failed to count transactions: %w", err)
+	}
+
+	limit := filter.Limit
+	if limit <= 0 {
+		limit = 20
+	}
+	offset := filter.Offset
+	if offset < 0 {
+		offset = 0
+	}
+
+	itemsQuery := fmt.Sprintf(`
+		SELECT id, user_id, amount, type, category_id, TO_CHAR(transaction_date, 'YYYY-MM-DD'), description, created_at, updated_at
+		FROM transactions
+		WHERE %s
+		ORDER BY transaction_date DESC, created_at DESC, id DESC
+		LIMIT $%d OFFSET $%d
+	`, whereSQL, argIdx, argIdx+1)
+
+	itemsArgs := append(args, limit, offset)
+
+	rows, err := r.db.QueryContext(ctx, itemsQuery, itemsArgs...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query transactions: %w", err)
+	}
+	defer rows.Close()
+
+	transactions := make([]domain.Transaction, 0)
+	for rows.Next() {
+		var tx domain.Transaction
+		if err := rows.Scan(&tx.ID, &tx.UserID, &tx.Amount, &tx.Type, &tx.CategoryID, &tx.TransactionDate, &tx.Description, &tx.CreatedAt, &tx.UpdatedAt); err != nil {
+			return nil, fmt.Errorf("failed to scan transaction: %w", err)
+		}
+		transactions = append(transactions, tx)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("row iteration error: %w", err)
+	}
+
+	return &ListTransactionsResult{
+		Transactions: transactions,
+		TotalCount:   totalCount,
+	}, nil
 }
 
 // Update updates an existing transaction while verifying user ownership.

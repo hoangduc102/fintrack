@@ -14,6 +14,7 @@ import (
 	"github.com/hoangduc102/fintrack/internal/config"
 	"github.com/hoangduc102/fintrack/internal/domain"
 	"github.com/hoangduc102/fintrack/internal/handler"
+	"github.com/hoangduc102/fintrack/internal/repository"
 	"github.com/hoangduc102/fintrack/internal/server"
 	"github.com/hoangduc102/fintrack/internal/service"
 )
@@ -358,6 +359,48 @@ func (f *fakeTransactionRepoForRouter) Delete(ctx context.Context, id uuid.UUID,
 	return nil
 }
 
+func (f *fakeTransactionRepoForRouter) List(ctx context.Context, filter repository.ListTransactionsFilter) (*repository.ListTransactionsResult, error) {
+	var matching []domain.Transaction
+	for _, tx := range f.transactions {
+		if tx.UserID != filter.UserID {
+			continue
+		}
+		if filter.Type != nil && tx.Type != *filter.Type {
+			continue
+		}
+		if filter.CategoryID != nil {
+			if tx.CategoryID == nil || *tx.CategoryID != *filter.CategoryID {
+				continue
+			}
+		}
+		if filter.Uncategorized && tx.CategoryID != nil {
+			continue
+		}
+		if filter.StartDate != nil && tx.TransactionDate < *filter.StartDate {
+			continue
+		}
+		if filter.EndDate != nil && tx.TransactionDate > *filter.EndDate {
+			continue
+		}
+		matching = append(matching, *tx)
+	}
+
+	totalCount := len(matching)
+	start := filter.Offset
+	if start > totalCount {
+		start = totalCount
+	}
+	end := start + filter.Limit
+	if end > totalCount {
+		end = totalCount
+	}
+
+	return &repository.ListTransactionsResult{
+		Transactions: matching[start:end],
+		TotalCount:   totalCount,
+	}, nil
+}
+
 func TestTransactionsRoute(t *testing.T) {
 	cfg := &config.Config{
 		Environment: "test",
@@ -394,7 +437,26 @@ func TestTransactionsRoute(t *testing.T) {
 		t.Errorf("expected amount 75000, got %d", txResp.Amount)
 	}
 
-	// 2. Get Transaction
+	// 2. List Transactions
+	listReq, _ := http.NewRequest(http.MethodGet, "/api/v1/transactions", nil)
+	listReq.Header.Set("Authorization", "Bearer "+token)
+	listRec := httptest.NewRecorder()
+	router.ServeHTTP(listRec, listReq)
+	if listRec.Code != http.StatusOK {
+		t.Fatalf("list transactions failed: %d, body: %s", listRec.Code, listRec.Body.String())
+	}
+	var listResp handler.PaginatedTransactionsResponse
+	if err := json.Unmarshal(listRec.Body.Bytes(), &listResp); err != nil {
+		t.Fatalf("failed to decode list response: %v", err)
+	}
+	if len(listResp.Items) != 1 {
+		t.Errorf("expected 1 item in list, got %d", len(listResp.Items))
+	}
+	if listResp.Pagination.TotalItems != 1 {
+		t.Errorf("expected total_items 1, got %d", listResp.Pagination.TotalItems)
+	}
+
+	// 3. Get Transaction
 	getReq, _ := http.NewRequest(http.MethodGet, "/api/v1/transactions/"+txResp.ID, nil)
 	getReq.Header.Set("Authorization", "Bearer "+token)
 	getRec := httptest.NewRecorder()
@@ -403,7 +465,7 @@ func TestTransactionsRoute(t *testing.T) {
 		t.Fatalf("get transaction failed: %d", getRec.Code)
 	}
 
-	// 3. Update Transaction
+	// 4. Update Transaction
 	updateBody := `{"amount":80000,"type":"EXPENSE","transaction_date":"2026-09-25","description":"Lunch + Coffee"}`
 	updateReq, _ := http.NewRequest(http.MethodPut, "/api/v1/transactions/"+txResp.ID, strings.NewReader(updateBody))
 	updateReq.Header.Set("Authorization", "Bearer "+token)

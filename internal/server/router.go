@@ -80,6 +80,7 @@ func NewRouter(cfg *config.Config, deps ...interface{}) *gin.Engine {
 			txGroup := v1.Group("/transactions", handler.AuthMiddleware(jwtManager))
 			{
 				txGroup.POST("", txHandler.Create)
+				txGroup.GET("", txHandler.List)
 				txGroup.GET("/:id", txHandler.GetByID)
 				txGroup.PUT("/:id", txHandler.Update)
 				txGroup.DELETE("/:id", txHandler.Delete)
