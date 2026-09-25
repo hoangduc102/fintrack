@@ -23,6 +23,7 @@ type Server struct {
 	jwtManager      *auth.JWTManager
 	authHandler     *handler.AuthHandler
 	categoryHandler *handler.CategoryHandler
+	txHandler       *handler.TransactionHandler
 }
 
 // Option configures Server options.
@@ -56,6 +57,13 @@ func WithCategoryHandler(h *handler.CategoryHandler) Option {
 	}
 }
 
+// WithTransactionHandler sets the TransactionHandler instance for routing.
+func WithTransactionHandler(h *handler.TransactionHandler) Option {
+	return func(s *Server) {
+		s.txHandler = h
+	}
+}
+
 // New creates a configured Server instance.
 func New(cfg *config.Config, opts ...Option) *Server {
 	s := &Server{
@@ -81,7 +89,14 @@ func New(cfg *config.Config, opts ...Option) *Server {
 		s.categoryHandler = handler.NewCategoryHandler(catService)
 	}
 
-	router := NewRouter(cfg, s.authHandler, s.categoryHandler, s.jwtManager)
+	if s.txHandler == nil && s.db != nil {
+		txRepo := repository.NewPostgresTransactionRepository(s.db)
+		catRepo := repository.NewPostgresCategoryRepository(s.db)
+		txService := service.NewTransactionService(txRepo, catRepo)
+		s.txHandler = handler.NewTransactionHandler(txService)
+	}
+
+	router := NewRouter(cfg, s.authHandler, s.categoryHandler, s.txHandler, s.jwtManager)
 	s.httpServer = &http.Server{
 		Addr:    ":" + cfg.Port,
 		Handler: router,

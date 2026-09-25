@@ -318,3 +318,108 @@ func TestCategoriesRoute(t *testing.T) {
 		t.Fatalf("delete category failed: %d", deleteRec.Code)
 	}
 }
+
+type fakeTransactionRepoForRouter struct {
+	transactions map[uuid.UUID]*domain.Transaction
+}
+
+func (f *fakeTransactionRepoForRouter) Create(ctx context.Context, tx *domain.Transaction) error {
+	tx.ID = uuid.New()
+	tx.CreatedAt = time.Now().UTC()
+	tx.UpdatedAt = tx.CreatedAt
+	f.transactions[tx.ID] = tx
+	return nil
+}
+
+func (f *fakeTransactionRepoForRouter) FindByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*domain.Transaction, error) {
+	tx, ok := f.transactions[id]
+	if !ok || tx.UserID != userID {
+		return nil, domain.ErrNotFound
+	}
+	return tx, nil
+}
+
+func (f *fakeTransactionRepoForRouter) Update(ctx context.Context, tx *domain.Transaction) error {
+	existing, ok := f.transactions[tx.ID]
+	if !ok || existing.UserID != tx.UserID {
+		return domain.ErrNotFound
+	}
+	tx.UpdatedAt = time.Now().UTC()
+	f.transactions[tx.ID] = tx
+	return nil
+}
+
+func (f *fakeTransactionRepoForRouter) Delete(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
+	existing, ok := f.transactions[id]
+	if !ok || existing.UserID != userID {
+		return domain.ErrNotFound
+	}
+	delete(f.transactions, id)
+	return nil
+}
+
+func TestTransactionsRoute(t *testing.T) {
+	cfg := &config.Config{
+		Environment: "test",
+		Port:        "8080",
+	}
+
+	catRepo := &fakeCategoryRepoForRouter{categories: make(map[uuid.UUID]*domain.Category)}
+	txRepo := &fakeTransactionRepoForRouter{transactions: make(map[uuid.UUID]*domain.Transaction)}
+	txService := service.NewTransactionService(txRepo, catRepo)
+	txHandler := handler.NewTransactionHandler(txService)
+	jwtManager := auth.NewJWTManager("test-secret", 24*time.Hour)
+
+	router := server.NewRouter(cfg, txHandler, jwtManager)
+
+	userID := uuid.New()
+	token, _ := jwtManager.Generate(userID)
+
+	// 1. Create Transaction
+	createBody := `{"amount":75000,"type":"EXPENSE","transaction_date":"2026-09-25","description":"Lunch"}`
+	createReq, _ := http.NewRequest(http.MethodPost, "/api/v1/transactions", strings.NewReader(createBody))
+	createReq.Header.Set("Authorization", "Bearer "+token)
+	createReq.Header.Set("Content-Type", "application/json")
+	createRec := httptest.NewRecorder()
+	router.ServeHTTP(createRec, createReq)
+	if createRec.Code != http.StatusCreated {
+		t.Fatalf("create transaction failed: %d, body: %s", createRec.Code, createRec.Body.String())
+	}
+
+	var txResp handler.TransactionResponse
+	if err := json.Unmarshal(createRec.Body.Bytes(), &txResp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+	if txResp.Amount != 75000 {
+		t.Errorf("expected amount 75000, got %d", txResp.Amount)
+	}
+
+	// 2. Get Transaction
+	getReq, _ := http.NewRequest(http.MethodGet, "/api/v1/transactions/"+txResp.ID, nil)
+	getReq.Header.Set("Authorization", "Bearer "+token)
+	getRec := httptest.NewRecorder()
+	router.ServeHTTP(getRec, getReq)
+	if getRec.Code != http.StatusOK {
+		t.Fatalf("get transaction failed: %d", getRec.Code)
+	}
+
+	// 3. Update Transaction
+	updateBody := `{"amount":80000,"type":"EXPENSE","transaction_date":"2026-09-25","description":"Lunch + Coffee"}`
+	updateReq, _ := http.NewRequest(http.MethodPut, "/api/v1/transactions/"+txResp.ID, strings.NewReader(updateBody))
+	updateReq.Header.Set("Authorization", "Bearer "+token)
+	updateReq.Header.Set("Content-Type", "application/json")
+	updateRec := httptest.NewRecorder()
+	router.ServeHTTP(updateRec, updateReq)
+	if updateRec.Code != http.StatusOK {
+		t.Fatalf("update transaction failed: %d", updateRec.Code)
+	}
+
+	// 4. Delete Transaction
+	deleteReq, _ := http.NewRequest(http.MethodDelete, "/api/v1/transactions/"+txResp.ID, nil)
+	deleteReq.Header.Set("Authorization", "Bearer "+token)
+	deleteRec := httptest.NewRecorder()
+	router.ServeHTTP(deleteRec, deleteReq)
+	if deleteRec.Code != http.StatusNoContent {
+		t.Fatalf("delete transaction failed: %d", deleteRec.Code)
+	}
+}
