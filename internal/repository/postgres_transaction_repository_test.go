@@ -395,3 +395,73 @@ func TestPostgresTransactionRepository_List_Filters(t *testing.T) {
 	}
 }
 
+func TestPostgresTransactionRepository_CreateBatch(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+
+	userRepo := repository.NewPostgresUserRepository(db)
+	catRepo := repository.NewPostgresCategoryRepository(db)
+	txRepo := repository.NewPostgresTransactionRepository(db)
+	ctx := context.Background()
+
+	user := createTestUser(t, userRepo)
+
+	category := &domain.Category{
+		UserID: user.ID,
+		Name:   "Utilities",
+		Type:   domain.CategoryTypeExpense,
+	}
+	if err := catRepo.Create(ctx, category); err != nil {
+		t.Fatalf("failed to create category: %v", err)
+	}
+
+	txs := []domain.Transaction{
+		{
+			UserID:          user.ID,
+			Amount:          500000,
+			Type:            domain.TransactionTypeExpense,
+			CategoryID:      &category.ID,
+			TransactionDate: "2026-09-01",
+			Description:     ptrString("Electricity bill"),
+		},
+		{
+			UserID:          user.ID,
+			Amount:          200000,
+			Type:            domain.TransactionTypeExpense,
+			CategoryID:      nil,
+			TransactionDate: "2026-09-02",
+			Description:     ptrString("Water bill"),
+		},
+		{
+			UserID:          user.ID,
+			Amount:          20000000,
+			Type:            domain.TransactionTypeIncome,
+			CategoryID:      nil,
+			TransactionDate: "2026-09-05",
+			Description:     ptrString("Salary deposit"),
+		},
+	}
+
+	// 1. CreateBatch inserts all records
+	if err := txRepo.CreateBatch(ctx, txs); err != nil {
+		t.Fatalf("failed to create batch: %v", err)
+	}
+
+	// Verify all 3 were persisted
+	res, err := txRepo.List(ctx, repository.ListTransactionsFilter{
+		UserID: user.ID,
+		Limit:  10,
+	})
+	if err != nil {
+		t.Fatalf("failed to list transactions: %v", err)
+	}
+	if res.TotalCount != 3 {
+		t.Fatalf("expected 3 transactions in database, got %d", res.TotalCount)
+	}
+
+	// 2. Empty batch returns nil
+	if err := txRepo.CreateBatch(ctx, []domain.Transaction{}); err != nil {
+		t.Errorf("expected nil error on empty batch, got %v", err)
+	}
+}
+

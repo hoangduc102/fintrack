@@ -42,6 +42,28 @@ func (r *fakeTransactionRepository) Create(ctx context.Context, tx *domain.Trans
 	return nil
 }
 
+func (r *fakeTransactionRepository) CreateBatch(ctx context.Context, txs []domain.Transaction) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	now := time.Now().UTC()
+	for i := range txs {
+		tx := txs[i]
+		if tx.ID == uuid.Nil {
+			tx.ID = uuid.New()
+		}
+		if tx.CreatedAt.IsZero() {
+			tx.CreatedAt = now
+		}
+		if tx.UpdatedAt.IsZero() {
+			tx.UpdatedAt = now
+		}
+		copied := tx
+		r.transactions[tx.ID] = &copied
+	}
+	return nil
+}
+
 func (r *fakeTransactionRepository) FindByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*domain.Transaction, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()

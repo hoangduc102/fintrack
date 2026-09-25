@@ -44,6 +44,54 @@ func (r *PostgresTransactionRepository) Create(ctx context.Context, tx *domain.T
 	return nil
 }
 
+// CreateBatch inserts multiple transactions inside a single database transaction using a prepared statement.
+func (r *PostgresTransactionRepository) CreateBatch(ctx context.Context, txs []domain.Transaction) error {
+	if len(txs) == 0 {
+		return nil
+	}
+
+	dbtx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer dbtx.Rollback()
+
+	query := `
+		INSERT INTO transactions (id, user_id, amount, type, category_id, transaction_date, description, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+	`
+	stmt, err := dbtx.PrepareContext(ctx, query)
+	if err != nil {
+		return fmt.Errorf("failed to prepare batch insert statement: %w", err)
+	}
+	defer stmt.Close()
+
+	now := time.Now().UTC()
+	for i := range txs {
+		t := &txs[i]
+		if t.ID == uuid.Nil {
+			t.ID = uuid.New()
+		}
+		if t.CreatedAt.IsZero() {
+			t.CreatedAt = now
+		}
+		if t.UpdatedAt.IsZero() {
+			t.UpdatedAt = now
+		}
+
+		_, err := stmt.ExecContext(ctx, t.ID, t.UserID, t.Amount, t.Type, t.CategoryID, t.TransactionDate, t.Description, t.CreatedAt, t.UpdatedAt)
+		if err != nil {
+			return fmt.Errorf("failed to insert transaction at index %d: %w", i, err)
+		}
+	}
+
+	if err := dbtx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit batch transaction: %w", err)
+	}
+
+	return nil
+}
+
 // FindByID retrieves a transaction by ID ensuring user ownership isolation.
 func (r *PostgresTransactionRepository) FindByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*domain.Transaction, error) {
 	query := `

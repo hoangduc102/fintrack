@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"sort"
@@ -47,6 +48,28 @@ func (r *mockTransactionRepo) Create(ctx context.Context, tx *domain.Transaction
 
 	copied := *tx
 	r.transactions[tx.ID] = &copied
+	return nil
+}
+
+func (r *mockTransactionRepo) CreateBatch(ctx context.Context, txs []domain.Transaction) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	now := time.Now().UTC()
+	for i := range txs {
+		tx := txs[i]
+		if tx.ID == uuid.Nil {
+			tx.ID = uuid.New()
+		}
+		if tx.CreatedAt.IsZero() {
+			tx.CreatedAt = now
+		}
+		if tx.UpdatedAt.IsZero() {
+			tx.UpdatedAt = now
+		}
+		copied := tx
+		r.transactions[tx.ID] = &copied
+	}
 	return nil
 }
 
@@ -174,6 +197,7 @@ func TestTransactionHandler_AuthProtection(t *testing.T) {
 		path   string
 	}{
 		{http.MethodPost, "/api/v1/transactions"},
+		{http.MethodPost, "/api/v1/transactions/import"},
 		{http.MethodGet, "/api/v1/transactions"},
 		{http.MethodGet, "/api/v1/transactions/" + randomID},
 		{http.MethodPut, "/api/v1/transactions/" + randomID},
@@ -732,3 +756,90 @@ func TestTransactionHandler_List_ValidationErrors(t *testing.T) {
 		})
 	}
 }
+
+func TestTransactionHandler_Import(t *testing.T) {
+	jwtMgr := auth.NewJWTManager("test-secret-key-12345678901234567890", 24*time.Hour)
+	txRepo := newMockTransactionRepo()
+	catRepo := newMockCategoryRepo()
+	txSvc := service.NewTransactionService(txRepo, catRepo)
+	router := setupTransactionTestServer(txSvc, jwtMgr)
+
+	userID := uuid.New()
+	token, _ := jwtMgr.Generate(userID)
+
+	catFood := &domain.Category{ID: uuid.New(), UserID: userID, Name: "Food", Type: domain.CategoryTypeExpense}
+	_ = catRepo.Create(context.Background(), catFood)
+
+	t.Run("successful import with valid and partial records", func(t *testing.T) {
+		body := &bytes.Buffer{}
+		writer := multipart.NewWriter(body)
+		part, _ := writer.CreateFormFile("file", "transactions.csv")
+		csvData := `date,type,amount,category,description
+2026-09-01,EXPENSE,50000,Food,Lunch
+2026-09-02,INVALID,50000,Food,Bad Type
+2026-09-03,INCOME,1000000,,Bonus
+`
+		_, _ = part.Write([]byte(csvData))
+		_ = writer.Close()
+
+		req, _ := http.NewRequest(http.MethodPost, "/api/v1/transactions/import", body)
+		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d: %s", w.Code, w.Body.String())
+		}
+
+		var res domain.ImportResult
+		if err := json.Unmarshal(w.Body.Bytes(), &res); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+
+		if res.Total != 3 || res.Imported != 2 || res.Failed != 1 {
+			t.Errorf("unexpected import result: %+v", res)
+		}
+		if len(res.Errors) != 1 || res.Errors[0].Row != 3 {
+			t.Errorf("expected error on row 3, got %+v", res.Errors)
+		}
+	})
+
+	t.Run("missing file form field", func(t *testing.T) {
+		body := &bytes.Buffer{}
+		writer := multipart.NewWriter(body)
+		_ = writer.Close()
+
+		req, _ := http.NewRequest(http.MethodPost, "/api/v1/transactions/import", body)
+		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusBadRequest {
+			t.Fatalf("expected 400 Bad Request, got %d", w.Code)
+		}
+	})
+
+	t.Run("invalid csv header", func(t *testing.T) {
+		body := &bytes.Buffer{}
+		writer := multipart.NewWriter(body)
+		part, _ := writer.CreateFormFile("file", "transactions.csv")
+		_, _ = part.Write([]byte("wrong,header,row\n"))
+		_ = writer.Close()
+
+		req, _ := http.NewRequest(http.MethodPost, "/api/v1/transactions/import", body)
+		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusBadRequest {
+			t.Fatalf("expected 400 Bad Request, got %d", w.Code)
+		}
+	})
+}
+

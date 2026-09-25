@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strconv"
@@ -508,3 +509,81 @@ func (h *TransactionHandler) List(c *gin.Context) {
 		},
 	})
 }
+
+// Import handles POST /api/v1/transactions/import.
+func (h *TransactionHandler) Import(c *gin.Context) {
+	userID, err := GetUserID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": gin.H{
+				"code":    "UNAUTHORIZED",
+				"message": "unauthorized",
+			},
+		})
+		return
+	}
+
+	const maxImportSize = 5 << 20 // 5MB
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxImportSize)
+
+	fileHeader, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": gin.H{
+				"code":    "VALIDATION_ERROR",
+				"message": "file form field is required and payload must not exceed 5MB",
+				"fields": gin.H{
+					"file": "file form field is required and payload must not exceed 5MB",
+				},
+			},
+		})
+		return
+	}
+
+	file, err := fileHeader.Open()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": gin.H{
+				"code":    "VALIDATION_ERROR",
+				"message": "failed to open uploaded file",
+				"fields": gin.H{
+					"file": "failed to open uploaded file",
+				},
+			},
+		})
+		return
+	}
+	defer file.Close()
+
+	result, err := h.txService.ImportCSV(c.Request.Context(), userID, file)
+	if err != nil {
+		var valErr domain.ValidationError
+		if errors.As(err, &valErr) {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": gin.H{
+					"code":    "VALIDATION_ERROR",
+					"message": valErr.Message,
+					"fields": gin.H{
+						valErr.Field: valErr.Message,
+					},
+				},
+			})
+			return
+		}
+
+		if errors.Is(err, context.Canceled) {
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": gin.H{
+				"code":    "INTERNAL_ERROR",
+				"message": "failed to import transactions",
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+

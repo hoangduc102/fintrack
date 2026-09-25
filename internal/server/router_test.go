@@ -1,9 +1,11 @@
 package server_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -333,6 +335,20 @@ func (f *fakeTransactionRepoForRouter) Create(ctx context.Context, tx *domain.Tr
 	return nil
 }
 
+func (f *fakeTransactionRepoForRouter) CreateBatch(ctx context.Context, txs []domain.Transaction) error {
+	for i := range txs {
+		tx := txs[i]
+		if tx.ID == uuid.Nil {
+			tx.ID = uuid.New()
+		}
+		tx.CreatedAt = time.Now().UTC()
+		tx.UpdatedAt = tx.CreatedAt
+		copied := tx
+		f.transactions[tx.ID] = &copied
+	}
+	return nil
+}
+
 func (f *fakeTransactionRepoForRouter) FindByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*domain.Transaction, error) {
 	tx, ok := f.transactions[id]
 	if !ok || tx.UserID != userID {
@@ -484,6 +500,25 @@ func TestTransactionsRoute(t *testing.T) {
 	router.ServeHTTP(deleteRec, deleteReq)
 	if deleteRec.Code != http.StatusNoContent {
 		t.Fatalf("delete transaction failed: %d", deleteRec.Code)
+	}
+
+	// 5. Import CSV
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, _ := writer.CreateFormFile("file", "transactions.csv")
+	csvContent := `date,type,amount,category,description
+2026-09-01,EXPENSE,50000,,Lunch
+`
+	_, _ = part.Write([]byte(csvContent))
+	_ = writer.Close()
+
+	importReq, _ := http.NewRequest(http.MethodPost, "/api/v1/transactions/import", body)
+	importReq.Header.Set("Authorization", "Bearer "+token)
+	importReq.Header.Set("Content-Type", writer.FormDataContentType())
+	importRec := httptest.NewRecorder()
+	router.ServeHTTP(importRec, importReq)
+	if importRec.Code != http.StatusOK {
+		t.Fatalf("import transactions failed: %d, body: %s", importRec.Code, importRec.Body.String())
 	}
 }
 
