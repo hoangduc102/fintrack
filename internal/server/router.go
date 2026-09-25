@@ -38,6 +38,7 @@ func NewRouter(cfg *config.Config, deps ...interface{}) *gin.Engine {
 	var categoryHandler *handler.CategoryHandler
 	var txHandler *handler.TransactionHandler
 	var budgetHandler *handler.BudgetHandler
+	var analyticsHandler *handler.AnalyticsHandler
 	var jwtManager *auth.JWTManager
 
 	for _, dep := range deps {
@@ -50,6 +51,8 @@ func NewRouter(cfg *config.Config, deps ...interface{}) *gin.Engine {
 			txHandler = d
 		case *handler.BudgetHandler:
 			budgetHandler = d
+		case *handler.AnalyticsHandler:
+			analyticsHandler = d
 		case *auth.JWTManager:
 			jwtManager = d
 		}
@@ -96,6 +99,15 @@ func NewRouter(cfg *config.Config, deps ...interface{}) *gin.Engine {
 				budgetGroup.PUT("", budgetHandler.Upsert)
 				budgetGroup.GET("", budgetHandler.List)
 				budgetGroup.DELETE("/:id", budgetHandler.Delete)
+			}
+		}
+
+		if analyticsHandler != nil && jwtManager != nil {
+			analyticsGroup := v1.Group("/analytics", handler.AuthMiddleware(jwtManager))
+			{
+				analyticsGroup.GET("/summary", analyticsHandler.GetSummary)
+				analyticsGroup.GET("/categories", analyticsHandler.GetCategories)
+				analyticsGroup.GET("/trend", analyticsHandler.GetTrend)
 			}
 		}
 	}

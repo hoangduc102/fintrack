@@ -25,6 +25,7 @@ type Server struct {
 	categoryHandler *handler.CategoryHandler
 	txHandler       *handler.TransactionHandler
 	budgetHandler   *handler.BudgetHandler
+	analyticsHandler *handler.AnalyticsHandler
 }
 
 // Option configures Server options.
@@ -72,6 +73,13 @@ func WithBudgetHandler(h *handler.BudgetHandler) Option {
 	}
 }
 
+// WithAnalyticsHandler sets the AnalyticsHandler instance for routing.
+func WithAnalyticsHandler(h *handler.AnalyticsHandler) Option {
+	return func(s *Server) {
+		s.analyticsHandler = h
+	}
+}
+
 // New creates a configured Server instance.
 func New(cfg *config.Config, opts ...Option) *Server {
 	s := &Server{
@@ -111,7 +119,13 @@ func New(cfg *config.Config, opts ...Option) *Server {
 		s.budgetHandler = handler.NewBudgetHandler(budgetService)
 	}
 
-	router := NewRouter(cfg, s.authHandler, s.categoryHandler, s.txHandler, s.budgetHandler, s.jwtManager)
+	if s.analyticsHandler == nil && s.db != nil {
+		analyticsRepo := repository.NewPostgresAnalyticsRepository(s.db)
+		analyticsService := service.NewAnalyticsService(analyticsRepo)
+		s.analyticsHandler = handler.NewAnalyticsHandler(analyticsService)
+	}
+
+	router := NewRouter(cfg, s.authHandler, s.categoryHandler, s.txHandler, s.budgetHandler, s.analyticsHandler, s.jwtManager)
 	s.httpServer = &http.Server{
 		Addr:    ":" + cfg.Port,
 		Handler: router,

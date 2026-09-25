@@ -621,3 +621,121 @@ func TestBudgetsRoute(t *testing.T) {
 		t.Fatalf("delete budget failed: %d", rec3.Code)
 	}
 }
+
+type fakeAnalyticsRepoForRouter struct{}
+
+func (f *fakeAnalyticsRepoForRouter) GetMonthlySummary(ctx context.Context, userID uuid.UUID, year int, month int) (*domain.MonthlySummary, error) {
+	return &domain.MonthlySummary{
+		Month:        fmt.Sprintf("%04d-%02d", year, month),
+		TotalIncome:  15000000,
+		TotalExpense: 5000000,
+		NetSavings:   10000000,
+		BudgetStatus: domain.BudgetStatusOverview{
+			TotalBudget: 6000000,
+			TotalSpent:  5000000,
+			Remaining:   1000000,
+			Percentage:  83.33,
+		},
+	}, nil
+}
+
+func (f *fakeAnalyticsRepoForRouter) GetCategoryExpenses(ctx context.Context, userID uuid.UUID, year int, month int) ([]domain.CategoryExpenseShare, error) {
+	catID := uuid.New()
+	return []domain.CategoryExpenseShare{
+		{
+			CategoryID:   &catID,
+			CategoryName: "Groceries",
+			Amount:       5000000,
+			Percentage:   100.0,
+		},
+	}, nil
+}
+
+func (f *fakeAnalyticsRepoForRouter) GetMonthlyTrend(ctx context.Context, userID uuid.UUID, months int) ([]domain.MonthlyTrendPoint, error) {
+	res := make([]domain.MonthlyTrendPoint, months)
+	for i := 0; i < months; i++ {
+		res[i] = domain.MonthlyTrendPoint{
+			Month:      fmt.Sprintf("2026-%02d", i+1),
+			Income:     15000000,
+			Expense:    5000000,
+			NetSavings: 10000000,
+		}
+	}
+	return res, nil
+}
+
+func TestAnalyticsRoute(t *testing.T) {
+	cfg := &config.Config{
+		Environment: "test",
+		Port:        "8080",
+	}
+
+	analyticsRepo := &fakeAnalyticsRepoForRouter{}
+	analyticsService := service.NewAnalyticsService(analyticsRepo)
+	analyticsHandler := handler.NewAnalyticsHandler(analyticsService)
+	jwtManager := auth.NewJWTManager("test-secret", 24*time.Hour)
+
+	router := server.NewRouter(cfg, analyticsHandler, jwtManager)
+
+	userID := uuid.New()
+	token, _ := jwtManager.Generate(userID)
+
+	// 1. Get Monthly Summary
+	req1, _ := http.NewRequest(http.MethodGet, "/api/v1/analytics/summary?month=2026-09", nil)
+	req1.Header.Set("Authorization", "Bearer "+token)
+	rec1 := httptest.NewRecorder()
+	router.ServeHTTP(rec1, req1)
+	if rec1.Code != http.StatusOK {
+		t.Fatalf("get analytics summary failed: %d, body: %s", rec1.Code, rec1.Body.String())
+	}
+
+	var summaryResp domain.MonthlySummary
+	if err := json.Unmarshal(rec1.Body.Bytes(), &summaryResp); err != nil {
+		t.Fatalf("failed to decode summary response: %v", err)
+	}
+	if summaryResp.Month != "2026-09" || summaryResp.TotalIncome != 15000000 {
+		t.Errorf("unexpected summary response: %+v", summaryResp)
+	}
+
+	// 2. Get Category Expenses
+	req2, _ := http.NewRequest(http.MethodGet, "/api/v1/analytics/categories?month=2026-09", nil)
+	req2.Header.Set("Authorization", "Bearer "+token)
+	rec2 := httptest.NewRecorder()
+	router.ServeHTTP(rec2, req2)
+	if rec2.Code != http.StatusOK {
+		t.Fatalf("get analytics categories failed: %d, body: %s", rec2.Code, rec2.Body.String())
+	}
+
+	var catShares []handler.CategoryExpenseResponse
+	if err := json.Unmarshal(rec2.Body.Bytes(), &catShares); err != nil {
+		t.Fatalf("failed to decode category shares response: %v", err)
+	}
+	if len(catShares) != 1 || catShares[0].CategoryName != "Groceries" {
+		t.Errorf("unexpected category shares response: %+v", catShares)
+	}
+
+	// 3. Get Monthly Trend
+	req3, _ := http.NewRequest(http.MethodGet, "/api/v1/analytics/trend?months=6", nil)
+	req3.Header.Set("Authorization", "Bearer "+token)
+	rec3 := httptest.NewRecorder()
+	router.ServeHTTP(rec3, req3)
+	if rec3.Code != http.StatusOK {
+		t.Fatalf("get analytics trend failed: %d, body: %s", rec3.Code, rec3.Body.String())
+	}
+
+	var trendPoints []domain.MonthlyTrendPoint
+	if err := json.Unmarshal(rec3.Body.Bytes(), &trendPoints); err != nil {
+		t.Fatalf("failed to decode trend response: %v", err)
+	}
+	if len(trendPoints) != 6 {
+		t.Errorf("expected 6 trend points, got %d", len(trendPoints))
+	}
+
+	// 4. Unauthorized check
+	unauthReq, _ := http.NewRequest(http.MethodGet, "/api/v1/analytics/summary?month=2026-09", nil)
+	unauthRec := httptest.NewRecorder()
+	router.ServeHTTP(unauthRec, unauthReq)
+	if unauthRec.Code != http.StatusUnauthorized {
+		t.Errorf("expected 401 Unauthorized, got %d", unauthRec.Code)
+	}
+}
