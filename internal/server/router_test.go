@@ -3,6 +3,7 @@ package server_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -483,5 +484,140 @@ func TestTransactionsRoute(t *testing.T) {
 	router.ServeHTTP(deleteRec, deleteReq)
 	if deleteRec.Code != http.StatusNoContent {
 		t.Fatalf("delete transaction failed: %d", deleteRec.Code)
+	}
+}
+
+type fakeBudgetRepoForRouter struct {
+	budgets map[uuid.UUID]*domain.Budget
+}
+
+func (f *fakeBudgetRepoForRouter) Upsert(ctx context.Context, budget *domain.Budget) error {
+	for _, b := range f.budgets {
+		if b.UserID == budget.UserID && b.CategoryID == budget.CategoryID && b.Year == budget.Year && b.Month == budget.Month {
+			b.Amount = budget.Amount
+			b.UpdatedAt = time.Now().UTC()
+			budget.ID = b.ID
+			budget.CreatedAt = b.CreatedAt
+			budget.UpdatedAt = b.UpdatedAt
+			return nil
+		}
+	}
+	if budget.ID == uuid.Nil {
+		budget.ID = uuid.New()
+	}
+	budget.CreatedAt = time.Now().UTC()
+	budget.UpdatedAt = budget.CreatedAt
+	copied := *budget
+	f.budgets[budget.ID] = &copied
+	return nil
+}
+
+func (f *fakeBudgetRepoForRouter) FindByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*domain.Budget, error) {
+	b, ok := f.budgets[id]
+	if !ok || b.UserID != userID {
+		return nil, domain.ErrNotFound
+	}
+	return b, nil
+}
+
+func (f *fakeBudgetRepoForRouter) FindByCategoryAndMonth(ctx context.Context, userID uuid.UUID, categoryID uuid.UUID, year int, month int) (*domain.Budget, error) {
+	for _, b := range f.budgets {
+		if b.UserID == userID && b.CategoryID == categoryID && b.Year == year && b.Month == month {
+			return b, nil
+		}
+	}
+	return nil, domain.ErrNotFound
+}
+
+func (f *fakeBudgetRepoForRouter) ListByMonth(ctx context.Context, userID uuid.UUID, year int, month int) ([]domain.Budget, error) {
+	var result []domain.Budget
+	for _, b := range f.budgets {
+		if b.UserID == userID && b.Year == year && b.Month == month {
+			result = append(result, *b)
+		}
+	}
+	return result, nil
+}
+
+func (f *fakeBudgetRepoForRouter) Delete(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
+	b, ok := f.budgets[id]
+	if !ok || b.UserID != userID {
+		return domain.ErrNotFound
+	}
+	delete(f.budgets, id)
+	return nil
+}
+
+func (f *fakeBudgetRepoForRouter) GetSpent(ctx context.Context, userID uuid.UUID, categoryID uuid.UUID, year int, month int) (int64, error) {
+	return 0, nil
+}
+
+func TestBudgetsRoute(t *testing.T) {
+	cfg := &config.Config{
+		Environment: "test",
+		Port:        "8080",
+	}
+
+	catRepo := &fakeCategoryRepoForRouter{categories: make(map[uuid.UUID]*domain.Category)}
+	budgetRepo := &fakeBudgetRepoForRouter{budgets: make(map[uuid.UUID]*domain.Budget)}
+	budgetService := service.NewBudgetService(budgetRepo, catRepo)
+	budgetHandler := handler.NewBudgetHandler(budgetService)
+	jwtManager := auth.NewJWTManager("test-secret", 24*time.Hour)
+
+	router := server.NewRouter(cfg, budgetHandler, jwtManager)
+
+	userID := uuid.New()
+	token, _ := jwtManager.Generate(userID)
+
+	cat := &domain.Category{
+		ID:     uuid.New(),
+		UserID: userID,
+		Name:   "Dining",
+		Type:   domain.CategoryTypeExpense,
+	}
+	catRepo.categories[cat.ID] = cat
+
+	// 1. Create / Upsert Budget
+	upsertBody := fmt.Sprintf(`{"category_id":"%s","amount":5000000,"year":2026,"month":9}`, cat.ID.String())
+	req1, _ := http.NewRequest(http.MethodPut, "/api/v1/budgets", strings.NewReader(upsertBody))
+	req1.Header.Set("Authorization", "Bearer "+token)
+	req1.Header.Set("Content-Type", "application/json")
+	rec1 := httptest.NewRecorder()
+	router.ServeHTTP(rec1, req1)
+	if rec1.Code != http.StatusOK {
+		t.Fatalf("upsert budget failed: %d, body: %s", rec1.Code, rec1.Body.String())
+	}
+
+	var budgetResp handler.BudgetResponse
+	if err := json.Unmarshal(rec1.Body.Bytes(), &budgetResp); err != nil {
+		t.Fatalf("failed to decode budget response: %v", err)
+	}
+	if budgetResp.Amount != 5000000 {
+		t.Errorf("expected amount 5000000, got %d", budgetResp.Amount)
+	}
+
+	// 2. List Budgets
+	req2, _ := http.NewRequest(http.MethodGet, "/api/v1/budgets?month=2026-09", nil)
+	req2.Header.Set("Authorization", "Bearer "+token)
+	rec2 := httptest.NewRecorder()
+	router.ServeHTTP(rec2, req2)
+	if rec2.Code != http.StatusOK {
+		t.Fatalf("list budgets failed: %d", rec2.Code)
+	}
+	var listResp []handler.BudgetResponse
+	if err := json.Unmarshal(rec2.Body.Bytes(), &listResp); err != nil {
+		t.Fatalf("failed to decode list response: %v", err)
+	}
+	if len(listResp) != 1 {
+		t.Errorf("expected 1 budget in list, got %d", len(listResp))
+	}
+
+	// 3. Delete Budget
+	req3, _ := http.NewRequest(http.MethodDelete, "/api/v1/budgets/"+budgetResp.ID, nil)
+	req3.Header.Set("Authorization", "Bearer "+token)
+	rec3 := httptest.NewRecorder()
+	router.ServeHTTP(rec3, req3)
+	if rec3.Code != http.StatusNoContent {
+		t.Fatalf("delete budget failed: %d", rec3.Code)
 	}
 }

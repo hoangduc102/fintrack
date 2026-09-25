@@ -24,6 +24,7 @@ type Server struct {
 	authHandler     *handler.AuthHandler
 	categoryHandler *handler.CategoryHandler
 	txHandler       *handler.TransactionHandler
+	budgetHandler   *handler.BudgetHandler
 }
 
 // Option configures Server options.
@@ -64,6 +65,13 @@ func WithTransactionHandler(h *handler.TransactionHandler) Option {
 	}
 }
 
+// WithBudgetHandler sets the BudgetHandler instance for routing.
+func WithBudgetHandler(h *handler.BudgetHandler) Option {
+	return func(s *Server) {
+		s.budgetHandler = h
+	}
+}
+
 // New creates a configured Server instance.
 func New(cfg *config.Config, opts ...Option) *Server {
 	s := &Server{
@@ -96,7 +104,14 @@ func New(cfg *config.Config, opts ...Option) *Server {
 		s.txHandler = handler.NewTransactionHandler(txService)
 	}
 
-	router := NewRouter(cfg, s.authHandler, s.categoryHandler, s.txHandler, s.jwtManager)
+	if s.budgetHandler == nil && s.db != nil {
+		budgetRepo := repository.NewPostgresBudgetRepository(s.db)
+		catRepo := repository.NewPostgresCategoryRepository(s.db)
+		budgetService := service.NewBudgetService(budgetRepo, catRepo)
+		s.budgetHandler = handler.NewBudgetHandler(budgetService)
+	}
+
+	router := NewRouter(cfg, s.authHandler, s.categoryHandler, s.txHandler, s.budgetHandler, s.jwtManager)
 	s.httpServer = &http.Server{
 		Addr:    ":" + cfg.Port,
 		Handler: router,
