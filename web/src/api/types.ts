@@ -102,3 +102,67 @@ export interface UpdateTransactionInput {
   transaction_date: string // YYYY-MM-DD
   description?: string | null
 }
+
+// Budgets
+export interface Budget {
+  id: string
+  user_id: string
+  category_id: string
+  category_name?: string
+  amount: number
+  spent: number
+  year: number
+  month: number
+  created_at: string
+  updated_at: string
+}
+
+export interface UpsertBudgetInput {
+  category_id: string
+  amount: number
+  year: number
+  month: number
+}
+
+// Analytics
+export interface BudgetStatusOverview {
+  total_budget: number
+  total_spent: number
+  remaining: number
+  percentage: number
+}
+
+export interface MonthlySummary {
+  month: string // YYYY-MM
+  total_income: number
+  total_expense: number
+  net_savings: number
+  budget_status: BudgetStatusOverview
+}
+
+export interface CategoryExpenseShare {
+  category_id: string | null
+  category_name: string
+  amount: number
+  percentage: number
+}
+
+export interface MonthlyTrendPoint {
+  month: string // YYYY-MM
+  income: number
+  expense: number
+  net_savings: number
+}
+
+// CSV Import
+export interface ImportError {
+  row: number
+  error: string
+}
+
+export interface ImportResult {
+  total: number
+  imported: number
+  failed: number
+  errors: ImportError[]
+}

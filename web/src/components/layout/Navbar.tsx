@@ -84,14 +84,32 @@ export const Navbar: React.FC = () => {
                 <ReceiptText className="w-4 h-4 text-emerald-400" />
                 Transactions
               </Link>
-              <span className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 cursor-not-allowed">
-                <PiggyBank className="w-4 h-4" />
+              <a
+                href="/#budgets"
+                onClick={(e) => {
+                  if (location.pathname === '/') {
+                    e.preventDefault()
+                    document.getElementById('budgets')?.scrollIntoView({ behavior: 'smooth' })
+                  }
+                }}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-900 transition-colors"
+              >
+                <PiggyBank className="w-4 h-4 text-emerald-400" />
                 Budgets
-              </span>
-              <span className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 cursor-not-allowed">
-                <BarChart3 className="w-4 h-4" />
+              </a>
+              <a
+                href="/#analytics"
+                onClick={(e) => {
+                  if (location.pathname === '/') {
+                    e.preventDefault()
+                    document.getElementById('analytics')?.scrollIntoView({ behavior: 'smooth' })
+                  }
+                }}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-900 transition-colors"
+              >
+                <BarChart3 className="w-4 h-4 text-emerald-400" />
                 Analytics
-              </span>
+              </a>
             </nav>
           </div>
 
