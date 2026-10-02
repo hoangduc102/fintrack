@@ -9,13 +9,13 @@ export const ProtectedRoute: React.FC<{ children?: React.ReactNode }> = ({ child
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-400">
+      <div className="min-h-screen bg-[#F7F9FC] flex flex-col items-center justify-center text-[#718096]">
         <div className="relative flex items-center justify-center">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center animate-pulse">
-            <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
+          <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center animate-pulse">
+            <Loader2 className="w-8 h-8 text-[#5BC8A4] animate-spin" />
           </div>
         </div>
-        <p className="mt-4 text-sm font-medium tracking-wide text-slate-400">Restoring your session...</p>
+        <p className="mt-4 text-sm font-medium tracking-wide text-[#718096]">Restoring your session...</p>
       </div>
     )
   }

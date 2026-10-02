@@ -8,17 +8,16 @@ import { TrendChart } from '../components/dashboard/TrendChart'
 import { CategoryDistributionChart } from '../components/dashboard/CategoryDistributionChart'
 import { BudgetPanel } from '../components/dashboard/BudgetPanel'
 import { CsvImportModal } from '../components/dashboard/CsvImportModal'
+import { MonthPicker } from '../components/dashboard/MonthPicker'
 import {
   UploadCloud,
   PlusCircle,
-  ChevronLeft,
-  ChevronRight,
-  Calendar,
   Sparkles,
   ReceiptText,
   Tags,
   ShieldCheck,
-  CheckCircle2
+  CheckCircle2,
+  ChevronRight
 } from 'lucide-react'
 
 export const DashboardPage: React.FC = () => {
@@ -98,59 +97,37 @@ export const DashboardPage: React.FC = () => {
   const displayName = user?.display_name || user?.email?.split('@')[0] || 'User'
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-12">
+    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300 pb-12">
       {/* Welcome & Period Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-2 border-b border-slate-800">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[#E5EAF1]">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-400 mb-2">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/60 text-xs font-semibold text-[#2F8F78] mb-1.5 shadow-xs">
             <Sparkles className="w-3.5 h-3.5" />
             <span>Financial Overview</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Welcome back, <span className="text-emerald-400">{displayName}</span>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#243044] tracking-tight">
+            Welcome back, <span className="text-[#2F8F78]">{displayName}</span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-[#718096] mt-0.5">
             Real-time monthly summaries, category allocations, budgets, and historical cash flow.
           </p>
         </div>
 
-        {/* Action Controls & Month Picker */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Month Selector */}
-          <div className="flex items-center bg-slate-900 border border-slate-800 rounded-2xl p-1 shadow-lg">
-            <button
-              onClick={handlePrevMonth}
-              title="Previous Month"
-              className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-
-            <div className="flex items-center gap-2 px-3">
-              <Calendar className="w-4 h-4 text-emerald-400" />
-              <input
-                type="month"
-                value={selectedMonth}
-                onChange={(e) => {
-                  if (e.target.value) setSelectedMonth(e.target.value)
-                }}
-                className="bg-transparent text-sm font-semibold text-white focus:outline-none cursor-pointer"
-              />
-            </div>
-
-            <button
-              onClick={handleNextMonth}
-              title="Next Month"
-              className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
+        {/* Action Controls & Month Picker Toolbar */}
+        <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap sm:flex-nowrap shrink-0">
+          {/* Custom Styled Month/Year Selector */}
+          <MonthPicker
+            value={selectedMonth}
+            onChange={setSelectedMonth}
+            onPrevMonth={handlePrevMonth}
+            onNextMonth={handleNextMonth}
+          />
 
           {selectedMonth !== currentMonthStr && (
             <button
+              type="button"
               onClick={handleResetToCurrentMonth}
-              className="text-xs font-medium text-emerald-400 hover:text-emerald-300 px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 transition"
+              className="shrink-0 text-xs font-semibold text-[#2F8F78] hover:text-[#243044] px-3 py-2 rounded-xl bg-emerald-50/80 border border-emerald-200/60 hover:bg-emerald-100/60 transition shadow-xs cursor-pointer"
             >
               Current Month
             </button>
@@ -158,17 +135,18 @@ export const DashboardPage: React.FC = () => {
 
           {/* CSV Import Button */}
           <button
+            type="button"
             onClick={() => setIsImportModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-700 text-xs font-semibold shadow-sm transition"
+            className="shrink-0 inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-[#243044] border border-[#E5EAF1] text-xs font-semibold shadow-xs transition cursor-pointer"
           >
-            <UploadCloud className="w-4 h-4 text-emerald-400" />
+            <UploadCloud className="w-4 h-4 text-[#5BC8A4]" />
             <span>Import CSV</span>
           </button>
 
           {/* Add Transaction Button */}
           <Link
             to="/transactions"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white text-xs font-semibold shadow-lg shadow-emerald-950/50 transition"
+            className="shrink-0 inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 rounded-xl bg-[#5BC8A4] hover:bg-[#4db995] text-white text-xs font-semibold shadow-xs transition"
           >
             <PlusCircle className="w-4 h-4" />
             <span>New Transaction</span>
@@ -177,12 +155,12 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* Selected Month Status Indicator */}
-      <div className="flex items-center justify-between text-xs text-slate-400 bg-slate-900/40 border border-slate-800/80 px-4 py-2.5 rounded-xl">
+      <div className="flex items-center justify-between text-xs text-[#718096] bg-white border border-[#E5EAF1] px-4 py-2.5 rounded-xl shadow-xs">
         <span className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-400" />
-          Showing metrics for: <strong className="text-white">{monthDisplayTitle}</strong>
+          <span className="w-2 h-2 rounded-full bg-[#5BC8A4]" />
+          Showing metrics for: <strong className="text-[#243044] font-semibold">{monthDisplayTitle}</strong>
         </span>
-        <span className="hidden sm:inline text-slate-500">
+        <span className="hidden sm:inline text-[#718096]">
           All calculations performed in exact VND integer values
         </span>
       </div>
@@ -208,54 +186,54 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* Quick Navigation & Capabilities Bar */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-800/60">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-[#E5EAF1]">
         <Link
           to="/transactions"
-          className="p-4 rounded-xl bg-slate-900/40 hover:bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition flex items-center justify-between group"
+          className="p-4 rounded-2xl bg-white hover:bg-[#F7F9FC] border border-[#E5EAF1] transition flex items-center justify-between group shadow-xs"
         >
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400">
+            <div className="w-9 h-9 rounded-xl bg-[#5BC8A4]/15 border border-[#5BC8A4]/30 flex items-center justify-center text-[#2F8F78]">
               <ReceiptText className="w-4 h-4" />
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-white group-hover:text-emerald-400 transition-colors">
+              <h4 className="text-sm font-semibold text-[#243044] group-hover:text-[#2F8F78] transition-colors">
                 Transaction History
               </h4>
-              <p className="text-xs text-slate-400">Filter, search & inspect records</p>
+              <p className="text-xs text-[#718096]">Filter, search & inspect records</p>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-500 group-hover:translate-x-0.5 transition-transform" />
+          <ChevronRight className="w-4 h-4 text-[#718096] group-hover:translate-x-0.5 transition-transform" />
         </Link>
 
         <Link
           to="/categories"
-          className="p-4 rounded-xl bg-slate-900/40 hover:bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition flex items-center justify-between group"
+          className="p-4 rounded-2xl bg-white hover:bg-[#F7F9FC] border border-[#E5EAF1] transition flex items-center justify-between group shadow-xs"
         >
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+            <div className="w-9 h-9 rounded-xl bg-[#8FB7E8]/20 border border-[#8FB7E8]/40 flex items-center justify-center text-[#3B82F6]">
               <Tags className="w-4 h-4" />
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-white group-hover:text-emerald-400 transition-colors">
+              <h4 className="text-sm font-semibold text-[#243044] group-hover:text-[#3B82F6] transition-colors">
                 Custom Categories
               </h4>
-              <p className="text-xs text-slate-400">Manage income & expense tags</p>
+              <p className="text-xs text-[#718096]">Manage income & expense tags</p>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-500 group-hover:translate-x-0.5 transition-transform" />
+          <ChevronRight className="w-4 h-4 text-[#718096] group-hover:translate-x-0.5 transition-transform" />
         </Link>
 
-        <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 flex items-center justify-between">
+        <div className="p-4 rounded-2xl bg-white border border-[#E5EAF1] flex items-center justify-between shadow-xs">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+            <div className="w-9 h-9 rounded-xl bg-[#B8A7E8]/20 border border-[#B8A7E8]/40 flex items-center justify-center text-[#7C3AED]">
               <ShieldCheck className="w-4 h-4" />
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-white">Security & Precision</h4>
-              <p className="text-xs text-slate-400">Worker pool & int64 exact math</p>
+              <h4 className="text-sm font-semibold text-[#243044]">Security & Precision</h4>
+              <p className="text-xs text-[#718096]">Worker pool & int64 exact math</p>
             </div>
           </div>
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <CheckCircle2 className="w-4 h-4 text-[#5BC8A4]" />
         </div>
       </div>
 

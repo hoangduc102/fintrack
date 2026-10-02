@@ -89,43 +89,37 @@ export const RegisterPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Background ambient lighting glow */}
-      <div className="absolute top-1/4 right-1/3 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 left-1/3 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
-
+    <div className="min-h-screen bg-[#F7F9FC] flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         {/* Brand Header */}
         <div className="flex flex-col items-center">
           <Link to="/" className="flex items-center gap-3 group mb-2">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 p-0.5 shadow-xl shadow-emerald-500/20 group-hover:shadow-emerald-500/40 transition-all duration-300">
-              <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
-                <Wallet className="w-6 h-6 text-emerald-400 group-hover:scale-110 transition-transform duration-300" />
-              </div>
+            <div className="w-12 h-12 rounded-2xl bg-[#5BC8A4]/15 border border-[#5BC8A4]/30 flex items-center justify-center text-[#2F8F78] shadow-xs group-hover:bg-[#5BC8A4]/25 transition-all">
+              <Wallet className="w-6 h-6 text-[#2F8F78] group-hover:scale-105 transition-transform" />
             </div>
-            <span className="text-2xl font-extrabold bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
-              Fin<span className="text-emerald-400">Track</span>
+            <span className="text-2xl font-extrabold tracking-tight text-[#243044]">
+              Fin<span className="text-[#2F8F78]">Track</span>
             </span>
           </Link>
-          <h2 className="text-2xl font-bold text-white tracking-tight">Create an account</h2>
-          <p className="mt-1 text-sm text-slate-400">
+          <h2 className="text-2xl font-bold text-[#243044] tracking-tight">Create an account</h2>
+          <p className="mt-1 text-sm text-[#718096]">
             Start tracking expenses and managing monthly budgets
           </p>
         </div>
 
         {/* Card Form */}
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="bg-slate-900/60 backdrop-blur-xl py-8 px-6 shadow-2xl shadow-black/50 sm:rounded-2xl sm:px-10 border border-slate-800">
+          <div className="bg-white py-8 px-6 shadow-xs sm:rounded-2xl sm:px-10 border border-[#E5EAF1]">
             {generalError && (
-              <div className="mb-6 rounded-xl bg-rose-500/10 border border-rose-500/20 p-4 flex items-start gap-3 text-rose-300">
-                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-rose-400" />
+              <div className="mb-6 rounded-xl bg-rose-50 border border-rose-200 p-4 flex items-start gap-3 text-[#C53030]">
+                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-[#E98C8C]" />
                 <div className="text-sm font-medium leading-relaxed">{generalError}</div>
               </div>
             )}
 
             {isSuccess && (
-              <div className="mb-6 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-4 flex items-start gap-3 text-emerald-300">
-                <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5 text-emerald-400" />
+              <div className="mb-6 rounded-xl bg-emerald-50 border border-emerald-200 p-4 flex items-start gap-3 text-[#2F8F78]">
+                <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5 text-[#5BC8A4]" />
                 <div className="text-sm font-medium leading-relaxed">
                   Account created successfully! Default categories initialized. Redirecting...
                 </div>
@@ -134,11 +128,11 @@ export const RegisterPage: React.FC = () => {
 
             <form className="space-y-4" onSubmit={handleSubmit}>
               <div>
-                <label htmlFor="email" className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                  Email address <span className="text-emerald-400">*</span>
+                <label htmlFor="email" className="block text-xs font-semibold text-[#718096] uppercase tracking-wider mb-1.5">
+                  Email address <span className="text-[#5BC8A4]">*</span>
                 </label>
-                <div className="relative rounded-xl shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <div className="relative rounded-xl shadow-xs">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#718096]">
                     <Mail className="h-4 w-4" />
                   </div>
                   <input
@@ -150,24 +144,24 @@ export const RegisterPage: React.FC = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
-                    className={`block w-full pl-10 pr-4 py-2.5 bg-slate-950/80 border rounded-xl text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 text-sm transition-all duration-200 ${
+                    className={`block w-full pl-10 pr-4 py-2.5 bg-white border rounded-xl text-[#243044] placeholder-slate-400 focus:outline-none focus:ring-2 text-sm transition ${
                       fieldErrors.email
-                        ? 'border-rose-500/80 focus:ring-rose-500/50 focus:border-rose-500'
-                        : 'border-slate-700/80 focus:ring-emerald-500/50 focus:border-emerald-500'
+                        ? 'border-rose-400 focus:ring-rose-100 focus:border-rose-400'
+                        : 'border-[#E5EAF1] focus:ring-[#5BC8A4]/20 focus:border-[#5BC8A4]'
                     }`}
                   />
                 </div>
                 {fieldErrors.email && (
-                  <p className="mt-1.5 text-xs text-rose-400 font-medium">{fieldErrors.email}</p>
+                  <p className="mt-1.5 text-xs text-[#C53030] font-medium">{fieldErrors.email}</p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="displayName" className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                  Display name <span className="text-slate-400 font-normal">(optional)</span>
+                <label htmlFor="displayName" className="block text-xs font-semibold text-[#718096] uppercase tracking-wider mb-1.5">
+                  Display name <span className="text-[#718096] font-normal">(optional)</span>
                 </label>
-                <div className="relative rounded-xl shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <div className="relative rounded-xl shadow-xs">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#718096]">
                     <UserIcon className="h-4 w-4" />
                   </div>
                   <input
@@ -177,17 +171,17 @@ export const RegisterPage: React.FC = () => {
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="Duc Hoang"
-                    className="block w-full pl-10 pr-4 py-2.5 bg-slate-950/80 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 text-sm transition-all duration-200"
+                    className="block w-full pl-10 pr-4 py-2.5 bg-white border border-[#E5EAF1] rounded-xl text-[#243044] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#5BC8A4]/20 focus:border-[#5BC8A4] text-sm transition"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                  Password <span className="text-emerald-400">*</span>
+                <label htmlFor="password" className="block text-xs font-semibold text-[#718096] uppercase tracking-wider mb-1.5">
+                  Password <span className="text-[#5BC8A4]">*</span>
                 </label>
-                <div className="relative rounded-xl shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <div className="relative rounded-xl shadow-xs">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#718096]">
                     <Lock className="h-4 w-4" />
                   </div>
                   <input
@@ -199,31 +193,31 @@ export const RegisterPage: React.FC = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Min. 8 characters"
-                    className={`block w-full pl-10 pr-10 py-2.5 bg-slate-950/80 border rounded-xl text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 text-sm transition-all duration-200 ${
+                    className={`block w-full pl-10 pr-10 py-2.5 bg-white border rounded-xl text-[#243044] placeholder-slate-400 focus:outline-none focus:ring-2 text-sm transition ${
                       fieldErrors.password
-                        ? 'border-rose-500/80 focus:ring-rose-500/50 focus:border-rose-500'
-                        : 'border-slate-700/80 focus:ring-emerald-500/50 focus:border-emerald-500'
+                        ? 'border-rose-400 focus:ring-rose-100 focus:border-rose-400'
+                        : 'border-[#E5EAF1] focus:ring-[#5BC8A4]/20 focus:border-[#5BC8A4]'
                     }`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-200 transition-colors"
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#718096] hover:text-[#243044] transition-colors cursor-pointer"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
                 {fieldErrors.password && (
-                  <p className="mt-1.5 text-xs text-rose-400 font-medium">{fieldErrors.password}</p>
+                  <p className="mt-1.5 text-xs text-[#C53030] font-medium">{fieldErrors.password}</p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                  Confirm password <span className="text-emerald-400">*</span>
+                <label htmlFor="confirmPassword" className="block text-xs font-semibold text-[#718096] uppercase tracking-wider mb-1.5">
+                  Confirm password <span className="text-[#5BC8A4]">*</span>
                 </label>
-                <div className="relative rounded-xl shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <div className="relative rounded-xl shadow-xs">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#718096]">
                     <Lock className="h-4 w-4" />
                   </div>
                   <input
@@ -235,15 +229,15 @@ export const RegisterPage: React.FC = () => {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Re-enter password"
-                    className={`block w-full pl-10 pr-4 py-2.5 bg-slate-950/80 border rounded-xl text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 text-sm transition-all duration-200 ${
+                    className={`block w-full pl-10 pr-4 py-2.5 bg-white border rounded-xl text-[#243044] placeholder-slate-400 focus:outline-none focus:ring-2 text-sm transition ${
                       fieldErrors.confirmPassword
-                        ? 'border-rose-500/80 focus:ring-rose-500/50 focus:border-rose-500'
-                        : 'border-slate-700/80 focus:ring-emerald-500/50 focus:border-emerald-500'
+                        ? 'border-rose-400 focus:ring-rose-100 focus:border-rose-400'
+                        : 'border-[#E5EAF1] focus:ring-[#5BC8A4]/20 focus:border-[#5BC8A4]'
                     }`}
                   />
                 </div>
                 {fieldErrors.confirmPassword && (
-                  <p className="mt-1.5 text-xs text-rose-400 font-medium">{fieldErrors.confirmPassword}</p>
+                  <p className="mt-1.5 text-xs text-[#C53030] font-medium">{fieldErrors.confirmPassword}</p>
                 )}
               </div>
 
@@ -251,7 +245,7 @@ export const RegisterPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold text-slate-950 bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 shadow-lg shadow-emerald-500/25 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold text-white bg-[#5BC8A4] hover:bg-[#4db995] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5BC8A4]/40 shadow-xs transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {isLoading ? (
                     <>
@@ -268,12 +262,12 @@ export const RegisterPage: React.FC = () => {
               </div>
             </form>
 
-            <div className="mt-8 pt-6 border-t border-slate-800 text-center">
-              <p className="text-sm text-slate-400">
+            <div className="mt-8 pt-6 border-t border-[#E5EAF1] text-center">
+              <p className="text-sm text-[#718096]">
                 Already have an account?{' '}
                 <Link
                   to="/login"
-                  className="font-semibold text-emerald-400 hover:text-emerald-300 transition-colors"
+                  className="font-semibold text-[#2F8F78] hover:text-[#5BC8A4] transition-colors"
                 >
                   Sign in
                 </Link>

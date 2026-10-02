@@ -16,23 +16,25 @@ interface CategoryDistributionChartProps {
   isLoading: boolean
 }
 
+// Clean harmonious soft pastel palette
 const COLORS = [
-  '#10b981', // emerald
-  '#06b6d4', // cyan
-  '#3b82f6', // blue
-  '#8b5cf6', // violet
-  '#f59e0b', // amber
-  '#ec4899', // pink
-  '#f97316', // orange
-  '#14b8a6', // teal
-  '#64748b', // slate
+  '#5BC8A4', // mint
+  '#8FB7E8', // soft blue
+  '#B8A7E8', // soft lavender
+  '#E9C36A', // soft gold/amber
+  '#E98C8C', // soft coral/rose
+  '#6EE7B7', // light mint
+  '#93C5FD', // light blue
+  '#FCA5A5', // light rose
+  '#A5B4FC', // light indigo
+  '#FDE68A', // light yellow
 ]
 
 export const CategoryDistributionChart: React.FC<CategoryDistributionChartProps> = ({ data, isLoading }) => {
   if (isLoading) {
     return (
-      <div className="rounded-2xl bg-slate-900/60 border border-slate-800 p-6 h-96 flex flex-col items-center justify-center text-slate-400">
-        <Loader2 className="w-8 h-8 text-emerald-400 animate-spin mb-3" />
+      <div className="rounded-2xl bg-white border border-[#E5EAF1] p-6 h-96 flex flex-col items-center justify-center text-[#718096] shadow-xs">
+        <Loader2 className="w-8 h-8 text-[#5BC8A4] animate-spin mb-3" />
         <p className="text-sm">Loading expense distribution...</p>
       </div>
     )
@@ -47,24 +49,24 @@ export const CategoryDistributionChart: React.FC<CategoryDistributionChartProps>
   const hasData = chartData.length > 0 && chartData.some((d) => d.value > 0)
 
   return (
-    <div className="rounded-2xl bg-slate-900/60 border border-slate-800 p-6 flex flex-col justify-between">
-      <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-4">
+    <div className="rounded-2xl bg-white border border-[#E5EAF1] p-6 shadow-xs flex flex-col justify-between">
+      <div className="flex items-center justify-between pb-4 border-b border-[#E5EAF1] mb-4">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400">
+          <div className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200/60 flex items-center justify-center text-[#2F8F78]">
             <PieIcon className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-white leading-tight">Expense Distribution</h3>
-            <span className="text-xs text-slate-400">Percentage share by category</span>
+            <h3 className="text-base font-bold text-[#243044] leading-tight">Expense Distribution</h3>
+            <span className="text-xs text-[#718096]">Percentage share by category</span>
           </div>
         </div>
       </div>
 
       {!hasData ? (
-        <div className="h-72 flex flex-col items-center justify-center text-slate-400">
-          <PieIcon className="w-10 h-10 mb-2 opacity-30 text-slate-400" />
-          <p className="text-sm font-medium">No expenses recorded for this month</p>
-          <span className="text-xs text-slate-400 mt-1">Expenses logged will show category shares here</span>
+        <div className="h-72 flex flex-col items-center justify-center text-[#718096]">
+          <PieIcon className="w-10 h-10 mb-2 opacity-30 text-[#718096]" />
+          <p className="text-sm font-medium text-[#243044]">No expenses recorded for this month</p>
+          <span className="text-xs text-[#718096] mt-1">Expenses logged will show category shares here</span>
         </div>
       ) : (
         <div className="h-72 w-full">
@@ -76,14 +78,14 @@ export const CategoryDistributionChart: React.FC<CategoryDistributionChartProps>
                 cy="50%"
                 innerRadius={60}
                 outerRadius={85}
-                paddingAngle={4}
+                paddingAngle={3}
                 dataKey="value"
               >
                 {chartData.map((_, index) => (
                   <Cell 
                     key={`cell-${index}`} 
                     fill={COLORS[index % COLORS.length]} 
-                    stroke="rgba(15, 23, 42, 0.8)"
+                    stroke="#FFFFFF"
                     strokeWidth={2}
                   />
                 ))}
@@ -93,12 +95,12 @@ export const CategoryDistributionChart: React.FC<CategoryDistributionChartProps>
                   if (active && payload && payload.length) {
                     const item = payload[0].payload as { name: string; value: number; percentage: number }
                     return (
-                      <div className="rounded-xl bg-slate-950/95 border border-slate-700/80 p-3 shadow-xl backdrop-blur-md text-xs">
-                        <div className="font-semibold text-white mb-1">{item.name}</div>
-                        <div className="text-emerald-400 font-mono font-bold text-sm">
+                      <div className="rounded-xl bg-white border border-[#E5EAF1] p-3 shadow-lg text-xs">
+                        <div className="font-semibold text-[#243044] mb-1">{item.name}</div>
+                        <div className="text-[#2F8F78] font-mono font-bold text-sm">
                           {formatVND(item.value)}
                         </div>
-                        <div className="text-slate-400 mt-0.5">{item.percentage}% of total expenses</div>
+                        <div className="text-[#718096] mt-0.5">{item.percentage}% of total expenses</div>
                       </div>
                     )
                   }
@@ -106,7 +108,7 @@ export const CategoryDistributionChart: React.FC<CategoryDistributionChartProps>
                 }}
               />
               <Legend
-                formatter={(value) => <span className="text-xs text-slate-300 mr-2">{value}</span>}
+                formatter={(value) => <span className="text-xs text-[#718096] mr-2">{value}</span>}
                 iconType="circle"
                 iconSize={8}
               />

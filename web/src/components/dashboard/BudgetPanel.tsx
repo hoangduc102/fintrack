@@ -32,8 +32,6 @@ export const BudgetPanel: React.FC<BudgetPanelProps> = ({ year, month }) => {
   const [amountInput, setAmountInput] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
 
-  const monthStr = `${year}-${String(month).padStart(2, '0')}`
-
   // Fetch budgets for this month
   const { data: budgets = [], isLoading: isLoadingBudgets } = useQuery({
     queryKey: ['budgets', year, month],
@@ -50,8 +48,8 @@ export const BudgetPanel: React.FC<BudgetPanelProps> = ({ year, month }) => {
   const upsertMutation = useMutation({
     mutationFn: (input: UpsertBudgetInput) => upsertBudget(input),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['budgets', year, month] })
-      queryClient.invalidateQueries({ queryKey: ['analytics-summary', monthStr] })
+      queryClient.invalidateQueries({ queryKey: ['budgets'] })
+      queryClient.invalidateQueries({ queryKey: ['analytics-summary'] })
       handleCloseModal()
     },
     onError: (err: any) => {
@@ -63,8 +61,8 @@ export const BudgetPanel: React.FC<BudgetPanelProps> = ({ year, month }) => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteBudget(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['budgets', year, month] })
-      queryClient.invalidateQueries({ queryKey: ['analytics-summary', monthStr] })
+      queryClient.invalidateQueries({ queryKey: ['budgets'] })
+      queryClient.invalidateQueries({ queryKey: ['analytics-summary'] })
       setDeletingId(null)
     },
   })
@@ -123,24 +121,25 @@ export const BudgetPanel: React.FC<BudgetPanelProps> = ({ year, month }) => {
   const overallPercentage = totalBudgeted > 0 ? (totalSpent / totalBudgeted) * 100 : 0
 
   return (
-    <div className="rounded-2xl bg-slate-900/60 border border-slate-800 p-6 flex flex-col">
+    <div className="rounded-2xl bg-white border border-[#E5EAF1] p-6 flex flex-col shadow-xs">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E5EAF1]">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+          <div className="w-8 h-8 rounded-xl bg-[#8FB7E8]/20 border border-[#8FB7E8]/40 flex items-center justify-center text-[#3B82F6]">
             <Target className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-white leading-tight">Monthly Budgets</h3>
-            <span className="text-xs text-slate-400">
+            <h3 className="text-base font-bold text-[#243044] leading-tight">Monthly Budgets</h3>
+            <span className="text-xs text-[#718096]">
               Track category spending limits for {String(month).padStart(2, '0')}/{year}
             </span>
           </div>
         </div>
 
         <button
+          type="button"
           onClick={handleOpenAdd}
-          className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 rounded-xl transition shadow-lg shadow-emerald-950/40 w-fit"
+          className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-white bg-[#5BC8A4] hover:bg-[#4db995] rounded-xl transition shadow-xs w-fit cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Set Budget</span>
@@ -149,26 +148,26 @@ export const BudgetPanel: React.FC<BudgetPanelProps> = ({ year, month }) => {
 
       {/* Overall Progress if budgets exist */}
       {budgets.length > 0 && (
-        <div className="mt-4 p-4 rounded-xl bg-slate-800/40 border border-slate-800">
+        <div className="mt-4 p-4 rounded-xl bg-[#F7F9FC] border border-[#E5EAF1]">
           <div className="flex items-center justify-between text-xs mb-2">
-            <span className="text-slate-400 font-medium">Total Budget Allocation</span>
-            <span className="font-semibold text-white">
-              {formatVND(totalSpent)} / <span className="text-slate-400">{formatVND(totalBudgeted)}</span>
+            <span className="text-[#718096] font-medium">Total Budget Allocation</span>
+            <span className="font-semibold text-[#243044]">
+              {formatVND(totalSpent)} / <span className="text-[#718096]">{formatVND(totalBudgeted)}</span>
               <span className={`ml-2 font-bold ${
-                overallPercentage > 100 ? 'text-rose-400' : overallPercentage >= 80 ? 'text-amber-400' : 'text-emerald-400'
+                overallPercentage > 100 ? 'text-[#E98C8C]' : overallPercentage >= 80 ? 'text-[#E9C36A]' : 'text-[#2F8F78]'
               }`}>
                 ({overallPercentage.toFixed(1)}%)
               </span>
             </span>
           </div>
-          <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
+          <div className="w-full bg-[#E5EAF1] h-2 rounded-full overflow-hidden">
             <div
               className={`h-full transition-all duration-500 rounded-full ${
                 overallPercentage > 100
-                  ? 'bg-rose-500'
+                  ? 'bg-[#E98C8C]'
                   : overallPercentage >= 80
-                  ? 'bg-amber-400'
-                  : 'bg-emerald-500'
+                  ? 'bg-[#E9C36A]'
+                  : 'bg-[#5BC8A4]'
               }`}
               style={{ width: `${Math.min(overallPercentage, 100)}%` }}
             />
@@ -179,22 +178,23 @@ export const BudgetPanel: React.FC<BudgetPanelProps> = ({ year, month }) => {
       {/* Content */}
       <div className="mt-4">
         {isLoadingBudgets ? (
-          <div className="h-48 flex flex-col items-center justify-center text-slate-400">
-            <Loader2 className="w-7 h-7 text-emerald-400 animate-spin mb-2" />
+          <div className="h-48 flex flex-col items-center justify-center text-[#718096]">
+            <Loader2 className="w-7 h-7 text-[#5BC8A4] animate-spin mb-2" />
             <p className="text-xs">Loading monthly budgets...</p>
           </div>
         ) : budgets.length === 0 ? (
           <div className="py-12 flex flex-col items-center justify-center text-center">
-            <div className="w-12 h-12 rounded-2xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-slate-400 mb-3">
+            <div className="w-12 h-12 rounded-2xl bg-[#F7F9FC] border border-[#E5EAF1] flex items-center justify-center text-[#718096] mb-3">
               <Target className="w-6 h-6" />
             </div>
-            <p className="text-sm font-semibold text-slate-300">No budgets set for this month</p>
-            <p className="text-xs text-slate-500 mt-1 max-w-sm">
+            <p className="text-sm font-semibold text-[#243044]">No budgets set for this month</p>
+            <p className="text-xs text-[#718096] mt-1 max-w-sm">
               Establish category spending goals to prevent overspending and grow your net savings.
             </p>
             <button
+              type="button"
               onClick={handleOpenAdd}
-              className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 rounded-lg transition"
+              className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#2F8F78] bg-emerald-50 border border-emerald-200/60 hover:bg-emerald-100/60 rounded-xl transition cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Create First Budget</span>
@@ -211,26 +211,26 @@ export const BudgetPanel: React.FC<BudgetPanelProps> = ({ year, month }) => {
               return (
                 <div
                   key={b.id}
-                  className="p-4 rounded-xl bg-slate-800/30 hover:bg-slate-800/60 border border-slate-800/80 transition flex flex-col justify-between"
+                  className="p-4 rounded-xl bg-white hover:bg-[#F7F9FC] border border-[#E5EAF1] hover:border-emerald-300 transition flex flex-col justify-between shadow-xs"
                 >
                   <div>
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm text-white">
+                        <span className="font-semibold text-sm text-[#243044]">
                           {b.category_name || 'Uncategorized'}
                         </span>
                         {isOver ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-[#C53030] border border-rose-200">
                             <AlertCircle className="w-3 h-3" />
                             Overbudget
                           </span>
                         ) : isWarning ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-[#B45309] border border-amber-200">
                             <AlertTriangle className="w-3 h-3" />
                             Near Limit
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-[#2F8F78] border border-emerald-200">
                             <CheckCircle2 className="w-3 h-3" />
                             Healthy
                           </span>
@@ -239,15 +239,17 @@ export const BudgetPanel: React.FC<BudgetPanelProps> = ({ year, month }) => {
 
                       <div className="flex items-center gap-1">
                         <button
+                          type="button"
                           onClick={() => handleOpenEdit(b)}
-                          className="p-1 text-slate-400 hover:text-white hover:bg-slate-700/60 rounded-lg transition"
+                          className="p-1 text-[#718096] hover:text-[#243044] hover:bg-[#F7F9FC] rounded-lg transition cursor-pointer"
                           title="Edit budget"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                         </button>
                         <button
+                          type="button"
                           onClick={() => setDeletingId(b.id)}
-                          className="p-1 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
+                          className="p-1 text-[#718096] hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
                           title="Delete budget"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -256,10 +258,10 @@ export const BudgetPanel: React.FC<BudgetPanelProps> = ({ year, month }) => {
                     </div>
 
                     {/* Progress Bar */}
-                    <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden mt-3 mb-2.5">
+                    <div className="w-full bg-[#E5EAF1] h-2 rounded-full overflow-hidden mt-3 mb-2.5">
                       <div
                         className={`h-full transition-all duration-500 rounded-full ${
-                          isOver ? 'bg-rose-500' : isWarning ? 'bg-amber-400' : 'bg-emerald-500'
+                          isOver ? 'bg-[#E98C8C]' : isWarning ? 'bg-[#E9C36A]' : 'bg-[#5BC8A4]'
                         }`}
                         style={{ width: `${Math.min(percentage, 100)}%` }}
                       />
@@ -267,23 +269,23 @@ export const BudgetPanel: React.FC<BudgetPanelProps> = ({ year, month }) => {
                   </div>
 
                   {/* Metrics Footer */}
-                  <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-800/60">
+                  <div className="flex items-center justify-between text-xs pt-2 border-t border-[#E5EAF1]">
                     <div>
-                      <span className="text-slate-400 text-[11px]">Spent: </span>
-                      <span className="font-semibold text-slate-200">{formatVND(b.spent)}</span>
+                      <span className="text-[#718096] text-[11px]">Spent: </span>
+                      <span className="font-semibold text-[#243044]">{formatVND(b.spent)}</span>
                     </div>
                     <div className="text-right">
-                      <span className="text-slate-400 text-[11px]">
+                      <span className="text-[#718096] text-[11px]">
                         {isOver ? 'Exceeded by: ' : 'Remaining: '}
                       </span>
                       <span
                         className={`font-semibold ${
-                          isOver ? 'text-rose-400' : 'text-emerald-400'
+                          isOver ? 'text-[#C53030]' : 'text-[#2F8F78]'
                         }`}
                       >
                         {formatVND(Math.abs(remaining))}
                       </span>
-                      <span className="text-slate-500 text-[10px] ml-1">
+                      <span className="text-[#718096] text-[10px] ml-1">
                         ({percentage.toFixed(0)}%)
                       </span>
                     </div>
@@ -297,17 +299,17 @@ export const BudgetPanel: React.FC<BudgetPanelProps> = ({ year, month }) => {
 
       {/* Delete Confirmation Modal */}
       {deletingId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="w-full max-w-sm bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-2xl">
-            <h4 className="text-base font-bold text-white mb-2">Delete Budget?</h4>
-            <p className="text-xs text-slate-400 mb-5 leading-relaxed">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-sm bg-white border border-[#E5EAF1] p-6 rounded-2xl shadow-xl">
+            <h4 className="text-base font-bold text-[#243044] mb-2">Delete Budget?</h4>
+            <p className="text-xs text-[#718096] mb-5 leading-relaxed">
               Are you sure you want to remove this budget? Your transaction history will remain intact.
             </p>
             <div className="flex justify-end gap-2.5">
               <button
                 type="button"
                 onClick={() => setDeletingId(null)}
-                className="px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition"
+                className="px-3 py-1.5 text-xs font-semibold text-[#718096] hover:text-[#243044] bg-[#F7F9FC] hover:bg-slate-100 rounded-xl transition cursor-pointer"
               >
                 Cancel
               </button>
@@ -315,7 +317,7 @@ export const BudgetPanel: React.FC<BudgetPanelProps> = ({ year, month }) => {
                 type="button"
                 onClick={() => deleteMutation.mutate(deletingId)}
                 disabled={deleteMutation.isPending}
-                className="px-3 py-1.5 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl transition flex items-center gap-1.5"
+                className="px-3 py-1.5 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 {deleteMutation.isPending && <Loader2 className="w-3 h-3 animate-spin" />}
                 <span>Delete</span>
@@ -327,22 +329,23 @@ export const BudgetPanel: React.FC<BudgetPanelProps> = ({ year, month }) => {
 
       {/* Upsert Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="w-full max-w-md bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-2xl">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-4">
-              <h4 className="text-base font-bold text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-md bg-white border border-[#E5EAF1] p-6 rounded-2xl shadow-xl">
+            <div className="flex items-center justify-between pb-4 border-b border-[#E5EAF1] mb-4">
+              <h4 className="text-base font-bold text-[#243044]">
                 {editingBudget ? 'Edit Monthly Budget' : 'Set Monthly Budget'}
               </h4>
               <button
+                type="button"
                 onClick={handleCloseModal}
-                className="p-1 text-slate-400 hover:text-white rounded-lg transition"
+                className="p-1 text-[#718096] hover:text-[#243044] rounded-lg transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {formError && (
-              <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2">
+              <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-[#C53030] text-xs flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{formError}</span>
               </div>
@@ -350,13 +353,13 @@ export const BudgetPanel: React.FC<BudgetPanelProps> = ({ year, month }) => {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold text-[#718096] uppercase tracking-wider mb-1.5">
                   Category (Expenses Only)
                 </label>
                 {isLoadingCategories ? (
-                  <div className="text-xs text-slate-400 py-2">Loading categories...</div>
+                  <div className="text-xs text-[#718096] py-2">Loading categories...</div>
                 ) : categories.length === 0 ? (
-                  <div className="text-xs text-amber-400 py-2">
+                  <div className="text-xs text-[#B45309] py-2">
                     No expense categories found. Please create an expense category first.
                   </div>
                 ) : (
@@ -364,7 +367,7 @@ export const BudgetPanel: React.FC<BudgetPanelProps> = ({ year, month }) => {
                     value={selectedCategoryId || categories[0]?.id || ''}
                     onChange={(e) => setSelectedCategoryId(e.target.value)}
                     disabled={!!editingBudget}
-                    className="w-full bg-slate-800/80 border border-slate-700/80 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-full bg-white border border-[#E5EAF1] rounded-xl px-3.5 py-2 text-sm text-[#243044] focus:outline-none focus:border-[#5BC8A4] focus:ring-2 focus:ring-[#5BC8A4]/20 transition disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {categories.map((cat) => (
                       <option key={cat.id} value={cat.id}>
@@ -374,14 +377,14 @@ export const BudgetPanel: React.FC<BudgetPanelProps> = ({ year, month }) => {
                   </select>
                 )}
                 {editingBudget && (
-                  <p className="text-[11px] text-slate-500 mt-1">
+                  <p className="text-[11px] text-[#718096] mt-1">
                     Category cannot be changed when editing an existing budget.
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold text-[#718096] uppercase tracking-wider mb-1.5">
                   Monthly Limit (VND)
                 </label>
                 <input
@@ -389,27 +392,27 @@ export const BudgetPanel: React.FC<BudgetPanelProps> = ({ year, month }) => {
                   placeholder="e.g. 2,000,000"
                   value={amountInput ? Number(amountInput.replace(/[^0-9]/g, '')).toLocaleString('en-US') : ''}
                   onChange={(e) => setAmountInput(e.target.value.replace(/[^0-9]/g, ''))}
-                  className="w-full bg-slate-800/80 border border-slate-700/80 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition font-mono"
+                  className="w-full bg-white border border-[#E5EAF1] rounded-xl px-3.5 py-2 text-sm text-[#243044] focus:outline-none focus:border-[#5BC8A4] focus:ring-2 focus:ring-[#5BC8A4]/20 transition font-mono"
                   required
                 />
               </div>
 
-              <div className="text-[11px] text-slate-400 bg-slate-800/30 p-2.5 rounded-lg border border-slate-800">
-                Target Period: <span className="font-semibold text-white">{String(month).padStart(2, '0')}/{year}</span>
+              <div className="text-[11px] text-[#718096] bg-[#F7F9FC] p-2.5 rounded-xl border border-[#E5EAF1]">
+                Target Period: <span className="font-semibold text-[#243044]">{String(month).padStart(2, '0')}/{year}</span>
               </div>
 
               <div className="flex items-center justify-end gap-2.5 pt-3">
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="px-4 py-2 text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition"
+                  className="px-4 py-2 text-xs font-semibold text-[#718096] hover:text-[#243044] bg-[#F7F9FC] hover:bg-slate-100 rounded-xl transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={upsertMutation.isPending || categories.length === 0}
-                  className="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 rounded-xl transition flex items-center gap-1.5 disabled:opacity-50"
+                  className="px-4 py-2 text-xs font-semibold text-white bg-[#5BC8A4] hover:bg-[#4db995] rounded-xl transition flex items-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-xs"
                 >
                   {upsertMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   <span>{editingBudget ? 'Update Budget' : 'Save Budget'}</span>

@@ -20,8 +20,8 @@ export const MetricCards: React.FC<MetricCardsProps> = ({ summary, isLoading }) 
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="h-32 rounded-2xl bg-slate-900/50 border border-slate-800 p-5 flex items-center justify-center">
-            <Loader2 className="w-5 h-5 text-emerald-400 animate-spin" />
+          <div key={i} className="h-32 rounded-2xl bg-white border border-[#E5EAF1] p-5 flex items-center justify-center shadow-xs">
+            <Loader2 className="w-5 h-5 text-[#5BC8A4] animate-spin" />
           </div>
         ))}
       </div>
@@ -41,63 +41,58 @@ export const MetricCards: React.FC<MetricCardsProps> = ({ summary, isLoading }) 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* 1. Total Income */}
-      <div className="relative overflow-hidden rounded-2xl bg-slate-900/60 border border-slate-800 p-5 shadow-lg group hover:border-emerald-500/40 transition-all">
-        <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-xl pointer-events-none" />
+      <div className="rounded-2xl bg-white border border-[#E5EAF1] p-5 shadow-xs hover:border-emerald-300 transition-all">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Income</span>
-          <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+          <span className="text-xs font-semibold text-[#718096] uppercase tracking-wider">Total Income</span>
+          <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-200/60 flex items-center justify-center text-[#2F8F78]">
             <ArrowUpRight className="w-4 h-4" />
           </div>
         </div>
-        <div className="text-2xl font-bold text-white font-mono tracking-tight">
+        <div className="text-2xl font-bold text-[#243044] font-mono tracking-tight">
           {formatVND(income)}
         </div>
-        <div className="mt-2 text-xs text-slate-400 flex items-center gap-1.5">
-          <span className="text-emerald-400 font-medium">Inflows</span>
+        <div className="mt-2 text-xs text-[#718096] flex items-center gap-1.5">
+          <span className="text-[#2F8F78] font-medium">Inflows</span>
           <span>•</span>
           <span>This month</span>
         </div>
       </div>
 
       {/* 2. Total Expense */}
-      <div className="relative overflow-hidden rounded-2xl bg-slate-900/60 border border-slate-800 p-5 shadow-lg group hover:border-rose-500/40 transition-all">
-        <div className="absolute top-0 right-0 w-24 h-24 bg-rose-500/5 rounded-full blur-xl pointer-events-none" />
+      <div className="rounded-2xl bg-white border border-[#E5EAF1] p-5 shadow-xs hover:border-rose-300 transition-all">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Expenses</span>
-          <div className="w-8 h-8 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
+          <span className="text-xs font-semibold text-[#718096] uppercase tracking-wider">Total Expenses</span>
+          <div className="w-8 h-8 rounded-xl bg-rose-50 border border-rose-200/60 flex items-center justify-center text-[#E98C8C]">
             <ArrowDownLeft className="w-4 h-4" />
           </div>
         </div>
-        <div className="text-2xl font-bold text-white font-mono tracking-tight">
+        <div className="text-2xl font-bold text-[#243044] font-mono tracking-tight">
           {formatVND(expense)}
         </div>
-        <div className="mt-2 text-xs text-slate-400 flex items-center gap-1.5">
-          <span className="text-rose-400 font-medium">Outflows</span>
+        <div className="mt-2 text-xs text-[#718096] flex items-center gap-1.5">
+          <span className="text-[#E98C8C] font-medium">Outflows</span>
           <span>•</span>
           <span>This month</span>
         </div>
       </div>
 
       {/* 3. Net Savings */}
-      <div className="relative overflow-hidden rounded-2xl bg-slate-900/60 border border-slate-800 p-5 shadow-lg group hover:border-teal-500/40 transition-all">
-        <div className="absolute top-0 right-0 w-24 h-24 bg-teal-500/5 rounded-full blur-xl pointer-events-none" />
+      <div className="rounded-2xl bg-white border border-[#E5EAF1] p-5 shadow-xs hover:border-teal-300 transition-all">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Net Savings</span>
+          <span className="text-xs font-semibold text-[#718096] uppercase tracking-wider">Net Savings</span>
           <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
             isSavingsPositive 
-              ? 'bg-teal-500/10 border border-teal-500/20 text-teal-400' 
-              : 'bg-rose-500/10 border border-rose-500/20 text-rose-400'
+              ? 'bg-emerald-50 border border-emerald-200/60 text-[#2F8F78]' 
+              : 'bg-rose-50 border border-rose-200/60 text-[#E98C8C]'
           }`}>
             {isSavingsPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
           </div>
         </div>
-        <div className={`text-2xl font-bold font-mono tracking-tight ${
-          isSavingsPositive ? 'text-teal-300' : 'text-rose-400'
-        }`}>
+        <div className="text-2xl font-bold font-mono tracking-tight text-[#243044]">
           {isSavingsPositive ? '+' : ''}{formatVND(netSavings)}
         </div>
-        <div className="mt-2 text-xs text-slate-400 flex items-center gap-1.5">
-          <span className={isSavingsPositive ? 'text-teal-400 font-medium' : 'text-rose-400 font-medium'}>
+        <div className="mt-2 text-xs text-[#718096] flex items-center gap-1.5">
+          <span className={isSavingsPositive ? 'text-[#2F8F78] font-medium' : 'text-[#E98C8C] font-medium'}>
             {isSavingsPositive ? 'Surplus' : 'Deficit'}
           </span>
           <span>•</span>
@@ -106,11 +101,10 @@ export const MetricCards: React.FC<MetricCardsProps> = ({ summary, isLoading }) 
       </div>
 
       {/* 4. Budget Usage */}
-      <div className="relative overflow-hidden rounded-2xl bg-slate-900/60 border border-slate-800 p-5 shadow-lg group hover:border-amber-500/40 transition-all">
-        <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-xl pointer-events-none" />
+      <div className="rounded-2xl bg-white border border-[#E5EAF1] p-5 shadow-xs hover:border-amber-300 transition-all">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Budget Usage</span>
-          <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+          <span className="text-xs font-semibold text-[#718096] uppercase tracking-wider">Budget Usage</span>
+          <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-200/60 flex items-center justify-center text-[#D97706]">
             <PiggyBank className="w-4 h-4" />
           </div>
         </div>
@@ -118,20 +112,20 @@ export const MetricCards: React.FC<MetricCardsProps> = ({ summary, isLoading }) 
         {totalBudget > 0 ? (
           <div>
             <div className="flex items-baseline justify-between mb-1.5">
-              <span className="text-xl font-bold text-white font-mono">{budgetPct}%</span>
-              <span className="text-xs text-slate-400">
+              <span className="text-xl font-bold text-[#243044] font-mono">{budgetPct}%</span>
+              <span className="text-xs text-[#718096]">
                 {formatVND(totalSpent)} / {formatVND(totalBudget)}
               </span>
             </div>
             {/* Progress bar */}
-            <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+            <div className="w-full h-2 rounded-full bg-[#E5EAF1] overflow-hidden">
               <div 
                 className={`h-full rounded-full transition-all duration-500 ${
                   budgetPct > 100 
-                    ? 'bg-rose-500' 
+                    ? 'bg-[#E98C8C]' 
                     : budgetPct >= 80 
-                    ? 'bg-amber-400' 
-                    : 'bg-emerald-400'
+                    ? 'bg-[#E9C36A]' 
+                    : 'bg-[#5BC8A4]'
                 }`}
                 style={{ width: `${Math.min(budgetPct, 100)}%` }}
               />
@@ -139,8 +133,8 @@ export const MetricCards: React.FC<MetricCardsProps> = ({ summary, isLoading }) 
           </div>
         ) : (
           <div>
-            <div className="text-sm font-semibold text-slate-300 mt-2">No budgets set</div>
-            <p className="text-xs text-slate-400 mt-1">Set monthly category caps below</p>
+            <div className="text-sm font-semibold text-[#243044] mt-2">No budgets set</div>
+            <p className="text-xs text-[#718096] mt-0.5">Set monthly category caps below</p>
           </div>
         )}
       </div>

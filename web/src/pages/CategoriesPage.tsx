@@ -37,11 +37,18 @@ export const CategoriesPage: React.FC = () => {
     queryFn: () => getCategories(),
   })
 
+  const invalidateCategoryQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['categories'] })
+    queryClient.invalidateQueries({ queryKey: ['transactions'] })
+    queryClient.invalidateQueries({ queryKey: ['analytics-categories'] })
+    queryClient.invalidateQueries({ queryKey: ['budgets'] })
+  }
+
   // Create mutation
   const createMutation = useMutation({
     mutationFn: (data: { name: string; type: CategoryType }) => createCategory(data),
     onSuccess: (newCat) => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] })
+      invalidateCategoryQueries()
       setIsCreateOpen(false)
       setName('')
       setFormError(null)
@@ -64,7 +71,7 @@ export const CategoriesPage: React.FC = () => {
   const updateMutation = useMutation({
     mutationFn: ({ id, name }: { id: string; name: string }) => updateCategory(id, { name }),
     onSuccess: (updatedCat) => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] })
+      invalidateCategoryQueries()
       setEditingCategory(null)
       setName('')
       setFormError(null)
@@ -87,8 +94,7 @@ export const CategoriesPage: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteCategory(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] })
-      queryClient.invalidateQueries({ queryKey: ['transactions'] })
+      invalidateCategoryQueries()
       const deletedName = deletingCategory?.name
       setDeletingCategory(null)
       showFeedback(`Category "${deletedName}" deleted. Associated transactions are now uncategorized.`)
@@ -164,24 +170,25 @@ export const CategoriesPage: React.FC = () => {
   const incomeCategories = categories.filter((c) => c.type === 'INCOME')
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#243044] tracking-tight flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200/60 flex items-center justify-center text-[#2F8F78]">
               <Tags className="w-5 h-5" />
             </div>
             Categories
           </h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-[#718096]">
             Organize and classify your income and expenses for accurate tracking and budgeting
           </p>
         </div>
 
         <button
+          type="button"
           onClick={() => handleOpenCreate('EXPENSE')}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-950 bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 shadow-lg shadow-emerald-500/20 transition-all cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-[#5BC8A4] hover:bg-[#4db995] shadow-xs transition-all cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           Add Category
@@ -190,50 +197,51 @@ export const CategoriesPage: React.FC = () => {
 
       {/* Floating feedback alert */}
       {feedback && (
-        <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-4 flex items-center gap-3 text-emerald-300 animate-in fade-in slide-in-from-top-2">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+        <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 flex items-center gap-3 text-[#2F8F78] animate-in fade-in slide-in-from-top-2">
+          <CheckCircle2 className="w-5 h-5 text-[#5BC8A4] shrink-0" />
           <span className="text-sm font-medium">{feedback.message}</span>
         </div>
       )}
 
       {queryError && (
-        <div className="rounded-xl bg-rose-500/10 border border-rose-500/30 p-4 flex items-center gap-3 text-rose-300">
-          <AlertCircle className="w-5 h-5 text-rose-400 flex-shrink-0" />
+        <div className="rounded-xl bg-rose-50 border border-rose-200 p-4 flex items-center gap-3 text-[#C53030]">
+          <AlertCircle className="w-5 h-5 text-[#E98C8C] shrink-0" />
           <span className="text-sm font-medium">Failed to load categories. Please check your backend connection.</span>
         </div>
       )}
 
       {/* Categories Content Columns */}
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-          <Loader2 className="w-8 h-8 text-emerald-400 animate-spin mb-3" />
+        <div className="flex flex-col items-center justify-center py-20 text-[#718096]">
+          <Loader2 className="w-8 h-8 text-[#5BC8A4] animate-spin mb-3" />
           <p className="text-sm">Loading categories...</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Expense Categories Column */}
-          <div className="rounded-2xl bg-slate-900/60 border border-slate-800 p-6 flex flex-col">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-6">
+          <div className="rounded-2xl bg-white border border-[#E5EAF1] p-6 flex flex-col shadow-xs">
+            <div className="flex items-center justify-between pb-4 border-b border-[#E5EAF1] mb-6">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
+                <div className="w-8 h-8 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center text-[#C53030]">
                   <ArrowDownLeft className="w-4 h-4" />
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-white leading-tight">Expense Categories</h2>
-                  <span className="text-xs text-slate-400">{expenseCategories.length} categories configured</span>
+                  <h2 className="text-base font-bold text-[#243044] leading-tight">Expense Categories</h2>
+                  <span className="text-xs text-[#718096]">{expenseCategories.length} categories configured</span>
                 </div>
               </div>
 
               <button
+                type="button"
                 onClick={() => handleOpenCreate('EXPENSE')}
-                className="text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 px-2.5 py-1.5 rounded-lg border border-rose-500/20 transition-colors cursor-pointer"
+                className="text-xs font-semibold text-[#C53030] hover:text-rose-700 hover:bg-rose-50 px-2.5 py-1.5 rounded-lg border border-rose-200 transition-colors cursor-pointer"
               >
                 + Add Expense
               </button>
             </div>
 
             {expenseCategories.length === 0 ? (
-              <div className="py-12 text-center text-slate-400 border border-dashed border-slate-800 rounded-xl">
+              <div className="py-12 text-center text-[#718096] border border-dashed border-[#E5EAF1] rounded-xl bg-[#F7F9FC]">
                 <p className="text-sm">No expense categories yet.</p>
               </div>
             ) : (
@@ -241,27 +249,29 @@ export const CategoriesPage: React.FC = () => {
                 {expenseCategories.map((cat) => (
                   <div
                     key={cat.id}
-                    className="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80 hover:border-slate-700/80 transition-all group"
+                    className="flex items-center justify-between p-3.5 rounded-xl bg-[#F7F9FC] border border-[#E5EAF1] hover:border-emerald-300 transition-all group"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-2.5 h-2.5 rounded-full bg-rose-400" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#E98C8C]" />
                       <div>
-                        <span className="text-sm font-semibold text-slate-200">{cat.name}</span>
-                        <span className="block text-[11px] text-slate-400">Expense</span>
+                        <span className="text-sm font-semibold text-[#243044]">{cat.name}</span>
+                        <span className="block text-[11px] text-[#718096]">Expense</span>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-1 opacity-90 group-hover:opacity-100 transition-opacity">
                       <button
+                        type="button"
                         onClick={() => handleOpenEdit(cat)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-lg text-[#718096] hover:text-[#243044] hover:bg-white transition-colors cursor-pointer"
                         title="Edit name"
                       >
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleOpenDelete(cat)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-lg text-[#718096] hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                         title="Delete category"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -274,28 +284,29 @@ export const CategoriesPage: React.FC = () => {
           </div>
 
           {/* Income Categories Column */}
-          <div className="rounded-2xl bg-slate-900/60 border border-slate-800 p-6 flex flex-col">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-6">
+          <div className="rounded-2xl bg-white border border-[#E5EAF1] p-6 flex flex-col shadow-xs">
+            <div className="flex items-center justify-between pb-4 border-b border-[#E5EAF1] mb-6">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-[#2F8F78]">
                   <ArrowUpRight className="w-4 h-4" />
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-white leading-tight">Income Categories</h2>
-                  <span className="text-xs text-slate-400">{incomeCategories.length} categories configured</span>
+                  <h2 className="text-base font-bold text-[#243044] leading-tight">Income Categories</h2>
+                  <span className="text-xs text-[#718096]">{incomeCategories.length} categories configured</span>
                 </div>
               </div>
 
               <button
+                type="button"
                 onClick={() => handleOpenCreate('INCOME')}
-                className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 px-2.5 py-1.5 rounded-lg border border-emerald-500/20 transition-colors cursor-pointer"
+                className="text-xs font-semibold text-[#2F8F78] hover:text-emerald-800 hover:bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200 transition-colors cursor-pointer"
               >
                 + Add Income
               </button>
             </div>
 
             {incomeCategories.length === 0 ? (
-              <div className="py-12 text-center text-slate-400 border border-dashed border-slate-800 rounded-xl">
+              <div className="py-12 text-center text-[#718096] border border-dashed border-[#E5EAF1] rounded-xl bg-[#F7F9FC]">
                 <p className="text-sm">No income categories yet.</p>
               </div>
             ) : (
@@ -303,27 +314,29 @@ export const CategoriesPage: React.FC = () => {
                 {incomeCategories.map((cat) => (
                   <div
                     key={cat.id}
-                    className="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80 hover:border-slate-700/80 transition-all group"
+                    className="flex items-center justify-between p-3.5 rounded-xl bg-[#F7F9FC] border border-[#E5EAF1] hover:border-emerald-300 transition-all group"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#5BC8A4]" />
                       <div>
-                        <span className="text-sm font-semibold text-slate-200">{cat.name}</span>
-                        <span className="block text-[11px] text-slate-400">Income</span>
+                        <span className="text-sm font-semibold text-[#243044]">{cat.name}</span>
+                        <span className="block text-[11px] text-[#718096]">Income</span>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-1 opacity-90 group-hover:opacity-100 transition-opacity">
                       <button
+                        type="button"
                         onClick={() => handleOpenEdit(cat)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-lg text-[#718096] hover:text-[#243044] hover:bg-white transition-colors cursor-pointer"
                         title="Edit name"
                       >
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleOpenDelete(cat)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-lg text-[#718096] hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                         title="Delete category"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -339,28 +352,29 @@ export const CategoriesPage: React.FC = () => {
 
       {/* CREATE MODAL */}
       {isCreateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-              <h3 className="text-lg font-bold text-white">Create New Category</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white border border-[#E5EAF1] rounded-2xl w-full max-w-md p-6 shadow-xl relative text-[#243044]">
+            <div className="flex items-center justify-between pb-4 border-b border-[#E5EAF1]">
+              <h3 className="text-lg font-bold text-[#243044]">Create New Category</h3>
               <button
+                type="button"
                 onClick={() => setIsCreateOpen(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"
+                className="text-[#718096] hover:text-[#243044] p-1 rounded-lg hover:bg-[#F7F9FC] cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {formError && (
-              <div className="mt-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs font-medium text-rose-300 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-400" />
+              <div className="mt-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-medium text-[#C53030] flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-[#E98C8C]" />
                 <span>{formError}</span>
               </div>
             )}
 
             <form onSubmit={handleSaveCreate} className="mt-4 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-[#718096] uppercase tracking-wider mb-1.5">
                   Category Name
                 </label>
                 <input
@@ -370,15 +384,15 @@ export const CategoriesPage: React.FC = () => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Coffee & Snacks"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#E5EAF1] text-[#243044] text-sm focus:outline-none focus:ring-2 focus:ring-[#5BC8A4]/20 focus:border-[#5BC8A4]"
                 />
-                <div className="flex justify-end mt-1 text-[11px] text-slate-400">
+                <div className="flex justify-end mt-1 text-[11px] text-[#718096]">
                   {name.length}/50 characters
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-[#718096] uppercase tracking-wider mb-1.5">
                   Category Type
                 </label>
                 <div className="grid grid-cols-2 gap-3">
@@ -387,8 +401,8 @@ export const CategoriesPage: React.FC = () => {
                     onClick={() => setType('EXPENSE')}
                     className={`py-2 px-3 rounded-xl text-xs font-semibold border flex items-center justify-center gap-2 transition-all cursor-pointer ${
                       type === 'EXPENSE'
-                        ? 'bg-rose-500/20 border-rose-500/50 text-rose-300'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                        ? 'bg-rose-50 border-rose-200 text-[#C53030] shadow-xs'
+                        : 'bg-white border-[#E5EAF1] text-[#718096] hover:text-[#243044] hover:bg-[#F7F9FC]'
                     }`}
                   >
                     <ArrowDownLeft className="w-4 h-4" />
@@ -399,8 +413,8 @@ export const CategoriesPage: React.FC = () => {
                     onClick={() => setType('INCOME')}
                     className={`py-2 px-3 rounded-xl text-xs font-semibold border flex items-center justify-center gap-2 transition-all cursor-pointer ${
                       type === 'INCOME'
-                        ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                        ? 'bg-emerald-50 border-emerald-200 text-[#2F8F78] shadow-xs'
+                        : 'bg-white border-[#E5EAF1] text-[#718096] hover:text-[#243044] hover:bg-[#F7F9FC]'
                     }`}
                   >
                     <ArrowUpRight className="w-4 h-4" />
@@ -409,18 +423,18 @@ export const CategoriesPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-800">
+              <div className="pt-4 flex items-center justify-end gap-3 border-t border-[#E5EAF1]">
                 <button
                   type="button"
                   onClick={() => setIsCreateOpen(false)}
-                  className="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-sm font-medium text-[#718096] hover:text-[#243044] hover:bg-[#F7F9FC] cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={createMutation.isPending}
-                  className="px-4 py-2 rounded-xl text-sm font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-[#5BC8A4] hover:bg-[#4db995] transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50 shadow-xs"
                 >
                   {createMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
                   Create Category
@@ -433,28 +447,29 @@ export const CategoriesPage: React.FC = () => {
 
       {/* EDIT MODAL */}
       {editingCategory && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-              <h3 className="text-lg font-bold text-white">Edit Category</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white border border-[#E5EAF1] rounded-2xl w-full max-w-md p-6 shadow-xl relative text-[#243044]">
+            <div className="flex items-center justify-between pb-4 border-b border-[#E5EAF1]">
+              <h3 className="text-lg font-bold text-[#243044]">Edit Category</h3>
               <button
+                type="button"
                 onClick={() => setEditingCategory(null)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"
+                className="text-[#718096] hover:text-[#243044] p-1 rounded-lg hover:bg-[#F7F9FC] cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {formError && (
-              <div className="mt-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs font-medium text-rose-300 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-400" />
+              <div className="mt-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-medium text-[#C53030] flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-[#E98C8C]" />
                 <span>{formError}</span>
               </div>
             )}
 
             <form onSubmit={handleSaveEdit} className="mt-4 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-[#718096] uppercase tracking-wider mb-1.5">
                   Category Name
                 </label>
                 <input
@@ -463,26 +478,26 @@ export const CategoriesPage: React.FC = () => {
                   maxLength={50}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#E5EAF1] text-[#243044] text-sm focus:outline-none focus:ring-2 focus:ring-[#5BC8A4]/20 focus:border-[#5BC8A4]"
                 />
-                <div className="flex justify-between mt-1 text-[11px] text-slate-400">
-                  <span>Type: <strong className="text-slate-300">{editingCategory.type}</strong> (fixed)</span>
+                <div className="flex justify-between mt-1 text-[11px] text-[#718096]">
+                  <span>Type: <strong className="text-[#243044]">{editingCategory.type}</strong> (fixed)</span>
                   <span>{name.length}/50 characters</span>
                 </div>
               </div>
 
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-800">
+              <div className="pt-4 flex items-center justify-end gap-3 border-t border-[#E5EAF1]">
                 <button
                   type="button"
                   onClick={() => setEditingCategory(null)}
-                  className="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-sm font-medium text-[#718096] hover:text-[#243044] hover:bg-[#F7F9FC] cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={updateMutation.isPending}
-                  className="px-4 py-2 rounded-xl text-sm font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-[#5BC8A4] hover:bg-[#4db995] transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50 shadow-xs"
                 >
                   {updateMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
                   Save Changes
@@ -495,31 +510,31 @@ export const CategoriesPage: React.FC = () => {
 
       {/* DELETE CONFIRMATION MODAL */}
       {deletingCategory && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
-            <div className="flex items-center gap-3 text-rose-400 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
-                <Trash2 className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white border border-[#E5EAF1] rounded-2xl w-full max-w-md p-6 shadow-xl relative text-[#243044]">
+            <div className="flex items-center gap-3 text-[#C53030] mb-4">
+              <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center">
+                <Trash2 className="w-5 h-5 text-[#C53030]" />
               </div>
-              <h3 className="text-lg font-bold text-white">Delete Category</h3>
+              <h3 className="text-lg font-bold text-[#243044]">Delete Category</h3>
             </div>
 
-            <p className="text-sm text-slate-300 mb-4">
-              Are you sure you want to delete <strong className="text-white">"{deletingCategory.name}"</strong>?
+            <p className="text-sm text-[#718096] mb-4">
+              Are you sure you want to delete <strong className="text-[#243044]">"{deletingCategory.name}"</strong>?
             </p>
 
-            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 flex items-start gap-2.5 mb-6">
-              <Info className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-[#B45309] flex items-start gap-2.5 mb-6">
+              <Info className="w-4 h-4 text-[#D97706] shrink-0 mt-0.5" />
               <span>
                 <strong>Data Preservation:</strong> Existing transactions in this category will NOT be deleted. They will remain in your history and be marked as <strong>Uncategorized</strong>.
               </span>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#E5EAF1]">
               <button
                 type="button"
                 onClick={() => setDeletingCategory(null)}
-                className="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+                className="px-4 py-2 rounded-xl text-sm font-medium text-[#718096] hover:text-[#243044] hover:bg-[#F7F9FC] cursor-pointer"
               >
                 Cancel
               </button>
@@ -527,7 +542,7 @@ export const CategoriesPage: React.FC = () => {
                 type="button"
                 disabled={deleteMutation.isPending}
                 onClick={() => deleteMutation.mutate(deletingCategory.id)}
-                className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-rose-600 hover:bg-rose-500 transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-rose-600 hover:bg-rose-500 transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50 shadow-xs"
               >
                 {deleteMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
                 Delete Category
