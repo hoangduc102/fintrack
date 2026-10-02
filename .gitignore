@@ -34,3 +34,11 @@ go.work
 # OS files
 .DS_Store
 Thumbs.db
+
+# Agent, skills, and internal documentation
+.agents/
+skills-lock.json
+docs/
+AGENTS.md
+CONTEXT.md
+
