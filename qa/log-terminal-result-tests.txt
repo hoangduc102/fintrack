@@ -1,0 +1,496 @@
+PS D:\Go\pet-projects\fin-track> go test -v -race ./...
+?       github.com/hoangduc102/fintrack/cmd/server      [no test files]
+=== RUN   TestJWTManager_GenerateAndValidate
+--- PASS: TestJWTManager_GenerateAndValidate (0.00s)
+=== RUN   TestJWTManager_ExpiredToken
+--- PASS: TestJWTManager_ExpiredToken (0.00s)
+=== RUN   TestJWTManager_InvalidSignature
+--- PASS: TestJWTManager_InvalidSignature (0.00s)
+=== RUN   TestJWTManager_MalformedToken
+--- PASS: TestJWTManager_MalformedToken (0.00s)
+PASS
+ok      github.com/hoangduc102/fintrack/internal/auth   1.654s
+=== RUN   TestLoad_Defaults
+--- PASS: TestLoad_Defaults (0.00s)
+=== RUN   TestLoad_CustomEnvironment
+--- PASS: TestLoad_CustomEnvironment (0.00s)
+PASS
+ok      github.com/hoangduc102/fintrack/internal/config 1.262s
+=== RUN   TestDefaultConfig
+--- PASS: TestDefaultConfig (0.00s)
+=== RUN   TestOpen_EmptyURL
+--- PASS: TestOpen_EmptyURL (0.00s)
+=== RUN   TestOpen_UnreachableHost
+--- PASS: TestOpen_UnreachableHost (0.00s)
+=== RUN   TestOpen_LiveDatabase
+    database_test.go:57: skipping live database test: DATABASE_URL is not set
+--- SKIP: TestOpen_LiveDatabase (0.00s)
+PASS
+ok      github.com/hoangduc102/fintrack/internal/database       (cached)
+?       github.com/hoangduc102/fintrack/internal/domain [no test files]
+=== RUN   TestAnalyticsHandler_AuthProtection
+=== RUN   TestAnalyticsHandler_AuthProtection/GET_/api/v1/analytics/summary?month=2026-09_requires_auth
+=== RUN   TestAnalyticsHandler_AuthProtection/GET_/api/v1/analytics/categories?month=2026-09_requires_auth
+=== RUN   TestAnalyticsHandler_AuthProtection/GET_/api/v1/analytics/trend?months=6_requires_auth
+--- PASS: TestAnalyticsHandler_AuthProtection (0.00s)
+    --- PASS: TestAnalyticsHandler_AuthProtection/GET_/api/v1/analytics/summary?month=2026-09_requires_auth (0.00s)
+    --- PASS: TestAnalyticsHandler_AuthProtection/GET_/api/v1/analytics/categories?month=2026-09_requires_auth (0.00s)
+    --- PASS: TestAnalyticsHandler_AuthProtection/GET_/api/v1/analytics/trend?months=6_requires_auth (0.00s)
+=== RUN   TestAnalyticsHandler_GetSummary
+=== RUN   TestAnalyticsHandler_GetSummary/success
+=== RUN   TestAnalyticsHandler_GetSummary/missing_month_parameter
+=== RUN   TestAnalyticsHandler_GetSummary/invalid_month_format
+=== RUN   TestAnalyticsHandler_GetSummary/internal_server_error
+--- PASS: TestAnalyticsHandler_GetSummary (0.00s)
+    --- PASS: TestAnalyticsHandler_GetSummary/success (0.00s)
+    --- PASS: TestAnalyticsHandler_GetSummary/missing_month_parameter (0.00s)
+    --- PASS: TestAnalyticsHandler_GetSummary/invalid_month_format (0.00s)
+    --- PASS: TestAnalyticsHandler_GetSummary/internal_server_error (0.00s)
+=== RUN   TestAnalyticsHandler_GetCategories
+=== RUN   TestAnalyticsHandler_GetCategories/success
+=== RUN   TestAnalyticsHandler_GetCategories/missing_month_parameter
+=== RUN   TestAnalyticsHandler_GetCategories/invalid_month_format
+=== RUN   TestAnalyticsHandler_GetCategories/internal_server_error
+--- PASS: TestAnalyticsHandler_GetCategories (0.00s)
+    --- PASS: TestAnalyticsHandler_GetCategories/success (0.00s)
+    --- PASS: TestAnalyticsHandler_GetCategories/missing_month_parameter (0.00s)
+    --- PASS: TestAnalyticsHandler_GetCategories/invalid_month_format (0.00s)
+    --- PASS: TestAnalyticsHandler_GetCategories/internal_server_error (0.00s)
+=== RUN   TestAnalyticsHandler_GetTrend
+=== RUN   TestAnalyticsHandler_GetTrend/success_with_default_months_(6)
+=== RUN   TestAnalyticsHandler_GetTrend/success_with_explicit_months
+=== RUN   TestAnalyticsHandler_GetTrend/invalid_months_format_(non-integer)
+=== RUN   TestAnalyticsHandler_GetTrend/invalid_months_value_(out_of_bounds)
+=== RUN   TestAnalyticsHandler_GetTrend/internal_server_error
+--- PASS: TestAnalyticsHandler_GetTrend (0.00s)
+    --- PASS: TestAnalyticsHandler_GetTrend/success_with_default_months_(6) (0.00s)
+    --- PASS: TestAnalyticsHandler_GetTrend/success_with_explicit_months (0.00s)
+    --- PASS: TestAnalyticsHandler_GetTrend/invalid_months_format_(non-integer) (0.00s)       
+    --- PASS: TestAnalyticsHandler_GetTrend/invalid_months_value_(out_of_bounds) (0.00s)      
+    --- PASS: TestAnalyticsHandler_GetTrend/internal_server_error (0.00s)
+=== RUN   TestAuthHandler_Register_Success
+--- PASS: TestAuthHandler_Register_Success (0.54s)
+=== RUN   TestAuthHandler_Register_ValidationError
+--- PASS: TestAuthHandler_Register_ValidationError (0.00s)
+=== RUN   TestAuthHandler_Register_DuplicateEmailConflict
+--- PASS: TestAuthHandler_Register_DuplicateEmailConflict (0.55s)
+=== RUN   TestAuthHandler_Login_Success
+--- PASS: TestAuthHandler_Login_Success (1.07s)
+=== RUN   TestAuthHandler_Login_InvalidCredentials
+--- PASS: TestAuthHandler_Login_InvalidCredentials (1.12s)
+=== RUN   TestAuthMiddleware_MissingOrInvalidToken
+=== RUN   TestAuthMiddleware_MissingOrInvalidToken/missing_authorization_header
+=== RUN   TestAuthMiddleware_MissingOrInvalidToken/invalid_header_format_without_bearer       
+=== RUN   TestAuthMiddleware_MissingOrInvalidToken/expired_token_returns_401
+=== RUN   TestAuthMiddleware_MissingOrInvalidToken/tampered_token_returns_401
+--- PASS: TestAuthMiddleware_MissingOrInvalidToken (0.00s)
+    --- PASS: TestAuthMiddleware_MissingOrInvalidToken/missing_authorization_header (0.00s)   
+    --- PASS: TestAuthMiddleware_MissingOrInvalidToken/invalid_header_format_without_bearer (0.00s)
+    --- PASS: TestAuthMiddleware_MissingOrInvalidToken/expired_token_returns_401 (0.00s)      
+    --- PASS: TestAuthMiddleware_MissingOrInvalidToken/tampered_token_returns_401 (0.00s)     
+=== RUN   TestAuthHandler_Me_Success
+--- PASS: TestAuthHandler_Me_Success (1.38s)
+=== RUN   TestBudgetHandler_AuthProtection
+=== RUN   TestBudgetHandler_AuthProtection/PUT_/api/v1/budgets_requires_auth
+=== RUN   TestBudgetHandler_AuthProtection/GET_/api/v1/budgets?month=2026-09_requires_auth    
+=== RUN   TestBudgetHandler_AuthProtection/DELETE_/api/v1/budgets/949cb5f3-f726-4aab-83d6-e51978dac702_requires_auth
+--- PASS: TestBudgetHandler_AuthProtection (0.00s)
+    --- PASS: TestBudgetHandler_AuthProtection/PUT_/api/v1/budgets_requires_auth (0.00s)      
+    --- PASS: TestBudgetHandler_AuthProtection/GET_/api/v1/budgets?month=2026-09_requires_auth (0.00s)
+    --- PASS: TestBudgetHandler_AuthProtection/DELETE_/api/v1/budgets/949cb5f3-f726-4aab-83d6-e51978dac702_requires_auth (0.00s)
+=== RUN   TestBudgetHandler_Upsert
+=== RUN   TestBudgetHandler_Upsert/success_creates_budget_on_expense_category
+=== RUN   TestBudgetHandler_Upsert/supports_YYYY-MM_month_string_in_request_body
+=== RUN   TestBudgetHandler_Upsert/rejects_budget_on_income_category_with_400_Bad_Request     
+=== RUN   TestBudgetHandler_Upsert/validation_error_on_negative_amount_returns_400
+=== RUN   TestBudgetHandler_Upsert/invalid_category_id_UUID_returns_400
+--- PASS: TestBudgetHandler_Upsert (0.00s)
+    --- PASS: TestBudgetHandler_Upsert/success_creates_budget_on_expense_category (0.00s)     
+    --- PASS: TestBudgetHandler_Upsert/supports_YYYY-MM_month_string_in_request_body (0.00s)  
+    --- PASS: TestBudgetHandler_Upsert/rejects_budget_on_income_category_with_400_Bad_Request (0.00s)
+    --- PASS: TestBudgetHandler_Upsert/validation_error_on_negative_amount_returns_400 (0.00s)
+    --- PASS: TestBudgetHandler_Upsert/invalid_category_id_UUID_returns_400 (0.00s)
+=== RUN   TestBudgetHandler_List
+=== RUN   TestBudgetHandler_List/lists_budgets_with_valid_month
+=== RUN   TestBudgetHandler_List/missing_month_parameter_returns_400
+=== RUN   TestBudgetHandler_List/malformed_month_parameter_returns_400
+--- PASS: TestBudgetHandler_List (0.00s)
+    --- PASS: TestBudgetHandler_List/lists_budgets_with_valid_month (0.00s)
+    --- PASS: TestBudgetHandler_List/missing_month_parameter_returns_400 (0.00s)
+    --- PASS: TestBudgetHandler_List/malformed_month_parameter_returns_400 (0.00s)
+=== RUN   TestBudgetHandler_Delete
+=== RUN   TestBudgetHandler_Delete/owner_deletes_budget_successfully
+=== RUN   TestBudgetHandler_Delete/second_delete_returns_404
+=== RUN   TestBudgetHandler_Delete/invalid_id_format_returns_400
+--- PASS: TestBudgetHandler_Delete (0.00s)
+    --- PASS: TestBudgetHandler_Delete/owner_deletes_budget_successfully (0.00s)
+    --- PASS: TestBudgetHandler_Delete/second_delete_returns_404 (0.00s)
+    --- PASS: TestBudgetHandler_Delete/invalid_id_format_returns_400 (0.00s)
+=== RUN   TestCategoryHandler_AuthMiddlewareProtection
+=== RUN   TestCategoryHandler_AuthMiddlewareProtection/GET_/api/v1/categories_requires_auth   
+=== RUN   TestCategoryHandler_AuthMiddlewareProtection/POST_/api/v1/categories_requires_auth  
+=== RUN   TestCategoryHandler_AuthMiddlewareProtection/PUT_/api/v1/categories/a97e2a2d-e6b4-4847-a0c1-c4b47f3c20f3_requires_auth
+=== RUN   TestCategoryHandler_AuthMiddlewareProtection/DELETE_/api/v1/categories/f05bd2f3-90b5-4cd4-a696-47c9c84a1448_requires_auth
+--- PASS: TestCategoryHandler_AuthMiddlewareProtection (0.00s)
+    --- PASS: TestCategoryHandler_AuthMiddlewareProtection/GET_/api/v1/categories_requires_auth (0.00s)
+    --- PASS: TestCategoryHandler_AuthMiddlewareProtection/POST_/api/v1/categories_requires_auth (0.00s)
+    --- PASS: TestCategoryHandler_AuthMiddlewareProtection/PUT_/api/v1/categories/a97e2a2d-e6b4-4847-a0c1-c4b47f3c20f3_requires_auth (0.00s)
+    --- PASS: TestCategoryHandler_AuthMiddlewareProtection/DELETE_/api/v1/categories/f05bd2f3-90b5-4cd4-a696-47c9c84a1448_requires_auth (0.00s)
+=== RUN   TestCategoryHandler_Create
+=== RUN   TestCategoryHandler_Create/success_creates_category
+=== RUN   TestCategoryHandler_Create/duplicate_returns_409_Conflict
+=== RUN   TestCategoryHandler_Create/validation_failure_returns_400_Bad_Request
+--- PASS: TestCategoryHandler_Create (0.00s)
+    --- PASS: TestCategoryHandler_Create/success_creates_category (0.00s)
+    --- PASS: TestCategoryHandler_Create/duplicate_returns_409_Conflict (0.00s)
+    --- PASS: TestCategoryHandler_Create/validation_failure_returns_400_Bad_Request (0.00s)   
+=== RUN   TestCategoryHandler_List
+=== RUN   TestCategoryHandler_List/list_all_returns_all_categories
+=== RUN   TestCategoryHandler_List/filter_by_type=EXPENSE
+=== RUN   TestCategoryHandler_List/filter_by_invalid_type_returns_400
+--- PASS: TestCategoryHandler_List (0.00s)
+    --- PASS: TestCategoryHandler_List/list_all_returns_all_categories (0.00s)
+    --- PASS: TestCategoryHandler_List/filter_by_type=EXPENSE (0.00s)
+    --- PASS: TestCategoryHandler_List/filter_by_invalid_type_returns_400 (0.00s)
+=== RUN   TestCategoryHandler_Update
+=== RUN   TestCategoryHandler_Update/success_updates_category_name
+=== RUN   TestCategoryHandler_Update/not_found_returns_404
+=== RUN   TestCategoryHandler_Update/invalid_id_format_returns_400
+--- PASS: TestCategoryHandler_Update (0.00s)
+    --- PASS: TestCategoryHandler_Update/success_updates_category_name (0.00s)
+    --- PASS: TestCategoryHandler_Update/not_found_returns_404 (0.00s)
+    --- PASS: TestCategoryHandler_Update/invalid_id_format_returns_400 (0.00s)
+=== RUN   TestCategoryHandler_Delete
+=== RUN   TestCategoryHandler_Delete/success_deletes_category
+=== RUN   TestCategoryHandler_Delete/second_delete_returns_404
+=== RUN   TestCategoryHandler_Delete/invalid_id_returns_400
+--- PASS: TestCategoryHandler_Delete (0.00s)
+    --- PASS: TestCategoryHandler_Delete/success_deletes_category (0.00s)
+    --- PASS: TestCategoryHandler_Delete/second_delete_returns_404 (0.00s)
+    --- PASS: TestCategoryHandler_Delete/invalid_id_returns_400 (0.00s)
+=== RUN   TestTransactionHandler_AuthProtection
+=== RUN   TestTransactionHandler_AuthProtection/POST_/api/v1/transactions_requires_auth       
+=== RUN   TestTransactionHandler_AuthProtection/POST_/api/v1/transactions/import_requires_auth
+=== RUN   TestTransactionHandler_AuthProtection/GET_/api/v1/transactions_requires_auth        
+=== RUN   TestTransactionHandler_AuthProtection/GET_/api/v1/transactions/eb85a0c1-5729-4585-a9fd-8695bd6e0138_requires_auth
+=== RUN   TestTransactionHandler_AuthProtection/PUT_/api/v1/transactions/eb85a0c1-5729-4585-a9fd-8695bd6e0138_requires_auth
+=== RUN   TestTransactionHandler_AuthProtection/DELETE_/api/v1/transactions/eb85a0c1-5729-4585-a9fd-8695bd6e0138_requires_auth
+--- PASS: TestTransactionHandler_AuthProtection (0.00s)
+    --- PASS: TestTransactionHandler_AuthProtection/POST_/api/v1/transactions_requires_auth (0.00s)
+    --- PASS: TestTransactionHandler_AuthProtection/POST_/api/v1/transactions/import_requires_auth (0.00s)
+    --- PASS: TestTransactionHandler_AuthProtection/GET_/api/v1/transactions_requires_auth (0.00s)
+    --- PASS: TestTransactionHandler_AuthProtection/GET_/api/v1/transactions/eb85a0c1-5729-4585-a9fd-8695bd6e0138_requires_auth (0.00s)
+    --- PASS: TestTransactionHandler_AuthProtection/PUT_/api/v1/transactions/eb85a0c1-5729-4585-a9fd-8695bd6e0138_requires_auth (0.00s)
+    --- PASS: TestTransactionHandler_AuthProtection/DELETE_/api/v1/transactions/eb85a0c1-5729-4585-a9fd-8695bd6e0138_requires_auth (0.00s)
+=== RUN   TestTransactionHandler_Create
+=== RUN   TestTransactionHandler_Create/success_creates_transaction
+=== RUN   TestTransactionHandler_Create/validation_error_on_negative_amount_returns_400       
+--- PASS: TestTransactionHandler_Create (0.00s)
+    --- PASS: TestTransactionHandler_Create/success_creates_transaction (0.00s)
+    --- PASS: TestTransactionHandler_Create/validation_error_on_negative_amount_returns_400 (0.00s)
+=== RUN   TestTransactionHandler_GetByID
+=== RUN   TestTransactionHandler_GetByID/owner_gets_transaction_successfully
+=== RUN   TestTransactionHandler_GetByID/non-owner_receives_404_Not_Found
+=== RUN   TestTransactionHandler_GetByID/invalid_uuid_returns_400
+--- PASS: TestTransactionHandler_GetByID (0.00s)
+    --- PASS: TestTransactionHandler_GetByID/owner_gets_transaction_successfully (0.00s)      
+    --- PASS: TestTransactionHandler_GetByID/non-owner_receives_404_Not_Found (0.00s)
+    --- PASS: TestTransactionHandler_GetByID/invalid_uuid_returns_400 (0.00s)
+=== RUN   TestTransactionHandler_Update
+=== RUN   TestTransactionHandler_Update/owner_updates_transaction_successfully
+=== RUN   TestTransactionHandler_Update/update_non-existent_returns_404
+--- PASS: TestTransactionHandler_Update (0.00s)
+    --- PASS: TestTransactionHandler_Update/owner_updates_transaction_successfully (0.00s)    
+    --- PASS: TestTransactionHandler_Update/update_non-existent_returns_404 (0.00s)
+=== RUN   TestTransactionHandler_Delete
+=== RUN   TestTransactionHandler_Delete/owner_deletes_transaction_successfully
+=== RUN   TestTransactionHandler_Delete/second_delete_returns_404
+--- PASS: TestTransactionHandler_Delete (0.00s)
+    --- PASS: TestTransactionHandler_Delete/owner_deletes_transaction_successfully (0.00s)    
+    --- PASS: TestTransactionHandler_Delete/second_delete_returns_404 (0.00s)
+=== RUN   TestTransactionHandler_List_DefaultsAndPagination
+=== RUN   TestTransactionHandler_List_DefaultsAndPagination/default_pagination_returns_first_20_items
+=== RUN   TestTransactionHandler_List_DefaultsAndPagination/page_2_returns_remaining_5_items  
+=== RUN   TestTransactionHandler_List_DefaultsAndPagination/user2_has_no_transactions
+--- PASS: TestTransactionHandler_List_DefaultsAndPagination (0.00s)
+    --- PASS: TestTransactionHandler_List_DefaultsAndPagination/default_pagination_returns_first_20_items (0.00s)
+    --- PASS: TestTransactionHandler_List_DefaultsAndPagination/page_2_returns_remaining_5_items (0.00s)
+    --- PASS: TestTransactionHandler_List_DefaultsAndPagination/user2_has_no_transactions (0.00s)
+=== RUN   TestTransactionHandler_List_Filters
+=== RUN   TestTransactionHandler_List_Filters/filter_by_type=INCOME
+=== RUN   TestTransactionHandler_List_Filters/filter_by_category_id
+=== RUN   TestTransactionHandler_List_Filters/filter_by_uncategorized=true
+=== RUN   TestTransactionHandler_List_Filters/filter_by_date_range
+--- PASS: TestTransactionHandler_List_Filters (0.00s)
+    --- PASS: TestTransactionHandler_List_Filters/filter_by_type=INCOME (0.00s)
+    --- PASS: TestTransactionHandler_List_Filters/filter_by_category_id (0.00s)
+    --- PASS: TestTransactionHandler_List_Filters/filter_by_uncategorized=true (0.00s)        
+    --- PASS: TestTransactionHandler_List_Filters/filter_by_date_range (0.00s)
+=== RUN   TestTransactionHandler_List_ValidationErrors
+=== RUN   TestTransactionHandler_List_ValidationErrors/limit_exceeds_100
+=== RUN   TestTransactionHandler_List_ValidationErrors/invalid_limit_integer
+=== RUN   TestTransactionHandler_List_ValidationErrors/invalid_page_integer
+=== RUN   TestTransactionHandler_List_ValidationErrors/invalid_category_id_UUID
+=== RUN   TestTransactionHandler_List_ValidationErrors/invalid_uncategorized_boolean
+=== RUN   TestTransactionHandler_List_ValidationErrors/mutually_exclusive_category_id_and_uncategorized
+=== RUN   TestTransactionHandler_List_ValidationErrors/invalid_start_date_format
+=== RUN   TestTransactionHandler_List_ValidationErrors/start_date_after_end_date
+=== RUN   TestTransactionHandler_List_ValidationErrors/invalid_type_value
+--- PASS: TestTransactionHandler_List_ValidationErrors (0.00s)
+    --- PASS: TestTransactionHandler_List_ValidationErrors/limit_exceeds_100 (0.00s)
+    --- PASS: TestTransactionHandler_List_ValidationErrors/invalid_limit_integer (0.00s)      
+    --- PASS: TestTransactionHandler_List_ValidationErrors/invalid_page_integer (0.00s)       
+    --- PASS: TestTransactionHandler_List_ValidationErrors/invalid_category_id_UUID (0.00s)   
+    --- PASS: TestTransactionHandler_List_ValidationErrors/invalid_uncategorized_boolean (0.00s)
+    --- PASS: TestTransactionHandler_List_ValidationErrors/mutually_exclusive_category_id_and_uncategorized (0.00s)
+    --- PASS: TestTransactionHandler_List_ValidationErrors/invalid_start_date_format (0.00s)  
+    --- PASS: TestTransactionHandler_List_ValidationErrors/start_date_after_end_date (0.00s)  
+    --- PASS: TestTransactionHandler_List_ValidationErrors/invalid_type_value (0.00s)
+=== RUN   TestTransactionHandler_Import
+=== RUN   TestTransactionHandler_Import/successful_import_with_valid_and_partial_records      
+=== RUN   TestTransactionHandler_Import/missing_file_form_field
+=== RUN   TestTransactionHandler_Import/invalid_csv_header
+--- PASS: TestTransactionHandler_Import (0.00s)
+    --- PASS: TestTransactionHandler_Import/successful_import_with_valid_and_partial_records (0.00s)
+    --- PASS: TestTransactionHandler_Import/missing_file_form_field (0.00s)
+    --- PASS: TestTransactionHandler_Import/invalid_csv_header (0.00s)
+PASS
+ok      github.com/hoangduc102/fintrack/internal/handler        6.724s
+=== RUN   TestPostgresAnalyticsRepository_GetMonthlySummary
+--- PASS: TestPostgresAnalyticsRepository_GetMonthlySummary (0.07s)
+=== RUN   TestPostgresAnalyticsRepository_GetCategoryExpenses
+--- PASS: TestPostgresAnalyticsRepository_GetCategoryExpenses (0.03s)
+=== RUN   TestPostgresAnalyticsRepository_GetMonthlyTrend
+--- PASS: TestPostgresAnalyticsRepository_GetMonthlyTrend (0.03s)
+=== RUN   TestPostgresAnalyticsRepository_Isolation
+--- PASS: TestPostgresAnalyticsRepository_Isolation (0.03s)
+=== RUN   TestPostgresBudgetRepository_UpsertAndFind
+--- PASS: TestPostgresBudgetRepository_UpsertAndFind (0.03s)
+=== RUN   TestPostgresBudgetRepository_ListByMonth_WithSpentCalculation
+--- PASS: TestPostgresBudgetRepository_ListByMonth_WithSpentCalculation (0.04s)
+=== RUN   TestPostgresBudgetRepository_CascadeOnCategoryDeletion
+--- PASS: TestPostgresBudgetRepository_CascadeOnCategoryDeletion (0.03s)
+=== RUN   TestPostgresBudgetRepository_Delete
+--- PASS: TestPostgresBudgetRepository_Delete (0.02s)
+=== RUN   TestPostgresBudgetRepository_Isolation
+--- PASS: TestPostgresBudgetRepository_Isolation (0.03s)
+=== RUN   TestPostgresCategoryRepository_CreateAndFindByID
+--- PASS: TestPostgresCategoryRepository_CreateAndFindByID (0.02s)
+=== RUN   TestPostgresCategoryRepository_UniquenessPerUserAndType
+--- PASS: TestPostgresCategoryRepository_UniquenessPerUserAndType (0.03s)
+=== RUN   TestPostgresCategoryRepository_FindByUserAndType
+--- PASS: TestPostgresCategoryRepository_FindByUserAndType (0.03s)
+=== RUN   TestPostgresCategoryRepository_Update
+--- PASS: TestPostgresCategoryRepository_Update (0.03s)
+=== RUN   TestPostgresCategoryRepository_Delete
+--- PASS: TestPostgresCategoryRepository_Delete (0.02s)
+=== RUN   TestPostgresTransactionRepository_CreateAndFindByID
+--- PASS: TestPostgresTransactionRepository_CreateAndFindByID (0.02s)
+=== RUN   TestPostgresTransactionRepository_Update
+--- PASS: TestPostgresTransactionRepository_Update (0.02s)
+=== RUN   TestPostgresTransactionRepository_Delete
+--- PASS: TestPostgresTransactionRepository_Delete (0.02s)
+=== RUN   TestPostgresTransactionRepository_CategoryDeletionNullification
+--- PASS: TestPostgresTransactionRepository_CategoryDeletionNullification (0.03s)
+=== RUN   TestPostgresTransactionRepository_List_PaginationAndSorting
+--- PASS: TestPostgresTransactionRepository_List_PaginationAndSorting (0.03s)
+=== RUN   TestPostgresTransactionRepository_List_Filters
+--- PASS: TestPostgresTransactionRepository_List_Filters (0.05s)
+=== RUN   TestPostgresTransactionRepository_CreateBatch
+--- PASS: TestPostgresTransactionRepository_CreateBatch (0.03s)
+=== RUN   TestPostgresUserRepository_CreateWithCategories_Success
+--- PASS: TestPostgresUserRepository_CreateWithCategories_Success (0.03s)
+=== RUN   TestPostgresUserRepository_Create_DuplicateEmailReturnsConflict
+--- PASS: TestPostgresUserRepository_Create_DuplicateEmailReturnsConflict (0.02s)
+=== RUN   TestPostgresUserRepository_Atomicity_RollbackOnFailure
+--- PASS: TestPostgresUserRepository_Atomicity_RollbackOnFailure (0.02s)
+PASS
+ok      github.com/hoangduc102/fintrack/internal/repository     (cached)
+=== RUN   TestHealthCheck
+--- PASS: TestHealthCheck (0.00s)
+=== RUN   TestNotFound
+--- PASS: TestNotFound (0.00s)
+=== RUN   TestRegisterRoute
+--- PASS: TestRegisterRoute (0.53s)
+=== RUN   TestLoginAndMeRoute
+--- PASS: TestLoginAndMeRoute (1.07s)
+=== RUN   TestCategoriesRoute
+--- PASS: TestCategoriesRoute (0.00s)
+=== RUN   TestTransactionsRoute
+--- PASS: TestTransactionsRoute (0.00s)
+=== RUN   TestBudgetsRoute
+--- PASS: TestBudgetsRoute (0.00s)
+=== RUN   TestAnalyticsRoute
+--- PASS: TestAnalyticsRoute (0.00s)
+=== RUN   TestServer_DeterministicGracefulShutdown
+--- PASS: TestServer_DeterministicGracefulShutdown (0.00s)
+=== RUN   TestServer_PortAlreadyInUse
+--- PASS: TestServer_PortAlreadyInUse (0.00s)
+=== RUN   TestServer_DeterministicGracefulShutdownWithDB
+--- PASS: TestServer_DeterministicGracefulShutdownWithDB (0.00s)
+PASS
+ok      github.com/hoangduc102/fintrack/internal/server 4.196s
+=== RUN   TestAnalyticsService_GetMonthlySummary
+=== RUN   TestAnalyticsService_GetMonthlySummary/success_returns_summary
+=== RUN   TestAnalyticsService_GetMonthlySummary/invalid_month_format_returns_validation_error
+--- PASS: TestAnalyticsService_GetMonthlySummary (0.00s)
+    --- PASS: TestAnalyticsService_GetMonthlySummary/success_returns_summary (0.00s)
+    --- PASS: TestAnalyticsService_GetMonthlySummary/invalid_month_format_returns_validation_error (0.00s)
+=== RUN   TestAnalyticsService_GetCategoryExpenses
+=== RUN   TestAnalyticsService_GetCategoryExpenses/success_returns_category_shares
+=== RUN   TestAnalyticsService_GetCategoryExpenses/invalid_month_returns_validation_error     
+--- PASS: TestAnalyticsService_GetCategoryExpenses (0.00s)
+    --- PASS: TestAnalyticsService_GetCategoryExpenses/success_returns_category_shares (0.00s)
+    --- PASS: TestAnalyticsService_GetCategoryExpenses/invalid_month_returns_validation_error (0.00s)
+=== RUN   TestAnalyticsService_GetMonthlyTrend
+=== RUN   TestAnalyticsService_GetMonthlyTrend/default_months_when_0_is_passed
+=== RUN   TestAnalyticsService_GetMonthlyTrend/custom_months_within_limit
+=== RUN   TestAnalyticsService_GetMonthlyTrend/months_exceeding_24_returns_validation_error   
+--- PASS: TestAnalyticsService_GetMonthlyTrend (0.00s)
+    --- PASS: TestAnalyticsService_GetMonthlyTrend/default_months_when_0_is_passed (0.00s)    
+    --- PASS: TestAnalyticsService_GetMonthlyTrend/custom_months_within_limit (0.00s)
+    --- PASS: TestAnalyticsService_GetMonthlyTrend/months_exceeding_24_returns_validation_error (0.00s)
+=== RUN   TestAuthService_Register_Success
+--- PASS: TestAuthService_Register_Success (1.06s)
+=== RUN   TestAuthService_Register_ValidationErrors
+=== RUN   TestAuthService_Register_ValidationErrors/empty_email
+=== RUN   TestAuthService_Register_ValidationErrors/whitespace-only_email
+=== RUN   TestAuthService_Register_ValidationErrors/invalid_email_format_without_at-sign      
+=== RUN   TestAuthService_Register_ValidationErrors/invalid_email_format_without_domain       
+=== RUN   TestAuthService_Register_ValidationErrors/password_less_than_8_characters
+=== RUN   TestAuthService_Register_ValidationErrors/password_exceeding_72_bytes
+--- PASS: TestAuthService_Register_ValidationErrors (0.00s)
+    --- PASS: TestAuthService_Register_ValidationErrors/empty_email (0.00s)
+    --- PASS: TestAuthService_Register_ValidationErrors/whitespace-only_email (0.00s)
+    --- PASS: TestAuthService_Register_ValidationErrors/invalid_email_format_without_at-sign (0.00s)
+    --- PASS: TestAuthService_Register_ValidationErrors/invalid_email_format_without_domain (0.00s)
+    --- PASS: TestAuthService_Register_ValidationErrors/password_less_than_8_characters (0.00s)
+    --- PASS: TestAuthService_Register_ValidationErrors/password_exceeding_72_bytes (0.00s)   
+=== RUN   TestAuthService_Register_PasswordBoundaryLengths
+=== RUN   TestAuthService_Register_PasswordBoundaryLengths/exactly_8_chars_passes
+=== RUN   TestAuthService_Register_PasswordBoundaryLengths/exactly_72_bytes_passes
+--- PASS: TestAuthService_Register_PasswordBoundaryLengths (1.07s)
+    --- PASS: TestAuthService_Register_PasswordBoundaryLengths/exactly_8_chars_passes (0.54s) 
+    --- PASS: TestAuthService_Register_PasswordBoundaryLengths/exactly_72_bytes_passes (0.53s)
+=== RUN   TestAuthService_Register_DuplicateEmailConflict
+--- PASS: TestAuthService_Register_DuplicateEmailConflict (0.53s)
+=== RUN   TestAuthService_Login_Success
+--- PASS: TestAuthService_Login_Success (1.25s)
+=== RUN   TestAuthService_Login_InvalidCredentials
+--- PASS: TestAuthService_Login_InvalidCredentials (1.30s)
+=== RUN   TestAuthService_GetProfile_Success
+--- PASS: TestAuthService_GetProfile_Success (0.58s)
+=== RUN   TestAuthService_GetProfile_NotFound
+--- PASS: TestAuthService_GetProfile_NotFound (0.00s)
+=== RUN   TestBudgetService_Upsert_Success
+--- PASS: TestBudgetService_Upsert_Success (0.00s)
+=== RUN   TestBudgetService_Upsert_RejectsIncomeCategory
+--- PASS: TestBudgetService_Upsert_RejectsIncomeCategory (0.00s)
+=== RUN   TestBudgetService_Upsert_CategoryBelongsToAnotherUser
+--- PASS: TestBudgetService_Upsert_CategoryBelongsToAnotherUser (0.00s)
+=== RUN   TestBudgetService_Upsert_ValidationErrors
+=== RUN   TestBudgetService_Upsert_ValidationErrors/zero_amount
+=== RUN   TestBudgetService_Upsert_ValidationErrors/negative_amount
+=== RUN   TestBudgetService_Upsert_ValidationErrors/year_before_2000
+=== RUN   TestBudgetService_Upsert_ValidationErrors/year_after_2100
+=== RUN   TestBudgetService_Upsert_ValidationErrors/month_0
+=== RUN   TestBudgetService_Upsert_ValidationErrors/month_13
+=== RUN   TestBudgetService_Upsert_ValidationErrors/nil_category
+--- PASS: TestBudgetService_Upsert_ValidationErrors (0.00s)
+    --- PASS: TestBudgetService_Upsert_ValidationErrors/zero_amount (0.00s)
+    --- PASS: TestBudgetService_Upsert_ValidationErrors/negative_amount (0.00s)
+    --- PASS: TestBudgetService_Upsert_ValidationErrors/year_before_2000 (0.00s)
+    --- PASS: TestBudgetService_Upsert_ValidationErrors/year_after_2100 (0.00s)
+    --- PASS: TestBudgetService_Upsert_ValidationErrors/month_0 (0.00s)
+    --- PASS: TestBudgetService_Upsert_ValidationErrors/month_13 (0.00s)
+    --- PASS: TestBudgetService_Upsert_ValidationErrors/nil_category (0.00s)
+=== RUN   TestBudgetService_ListByMonth
+--- PASS: TestBudgetService_ListByMonth (0.00s)
+=== RUN   TestBudgetService_DeleteBudget
+--- PASS: TestBudgetService_DeleteBudget (0.00s)
+=== RUN   TestCategoryService_CreateCategory_Success
+--- PASS: TestCategoryService_CreateCategory_Success (0.00s)
+=== RUN   TestCategoryService_CreateCategory_ValidationErrors
+=== RUN   TestCategoryService_CreateCategory_ValidationErrors/empty_name
+=== RUN   TestCategoryService_CreateCategory_ValidationErrors/whitespace_name
+=== RUN   TestCategoryService_CreateCategory_ValidationErrors/name_exceeds_50_chars
+=== RUN   TestCategoryService_CreateCategory_ValidationErrors/invalid_type
+--- PASS: TestCategoryService_CreateCategory_ValidationErrors (0.00s)
+    --- PASS: TestCategoryService_CreateCategory_ValidationErrors/empty_name (0.00s)
+    --- PASS: TestCategoryService_CreateCategory_ValidationErrors/whitespace_name (0.00s)     
+    --- PASS: TestCategoryService_CreateCategory_ValidationErrors/name_exceeds_50_chars (0.00s)
+    --- PASS: TestCategoryService_CreateCategory_ValidationErrors/invalid_type (0.00s)        
+=== RUN   TestCategoryService_CreateCategory_NameBoundaryLengths
+--- PASS: TestCategoryService_CreateCategory_NameBoundaryLengths (0.00s)
+=== RUN   TestCategoryService_CreateCategory_DuplicateConflict
+--- PASS: TestCategoryService_CreateCategory_DuplicateConflict (0.00s)
+=== RUN   TestCategoryService_ListCategories
+--- PASS: TestCategoryService_ListCategories (0.00s)
+=== RUN   TestCategoryService_UpdateCategory
+--- PASS: TestCategoryService_UpdateCategory (0.00s)
+=== RUN   TestCategoryService_DeleteCategory
+--- PASS: TestCategoryService_DeleteCategory (0.00s)
+=== RUN   TestTransactionService_ImportCSV_Valid
+--- PASS: TestTransactionService_ImportCSV_Valid (0.00s)
+=== RUN   TestTransactionService_ImportCSV_PreflightHeaderValidation
+=== RUN   TestTransactionService_ImportCSV_PreflightHeaderValidation/empty_content
+=== RUN   TestTransactionService_ImportCSV_PreflightHeaderValidation/wrong_columns
+=== RUN   TestTransactionService_ImportCSV_PreflightHeaderValidation/missing_description_column
+--- PASS: TestTransactionService_ImportCSV_PreflightHeaderValidation (0.00s)
+    --- PASS: TestTransactionService_ImportCSV_PreflightHeaderValidation/empty_content (0.00s)
+    --- PASS: TestTransactionService_ImportCSV_PreflightHeaderValidation/wrong_columns (0.00s)
+    --- PASS: TestTransactionService_ImportCSV_PreflightHeaderValidation/missing_description_column (0.00s)
+=== RUN   TestTransactionService_ImportCSV_PartialFailures
+--- PASS: TestTransactionService_ImportCSV_PartialFailures (0.00s)
+=== RUN   TestTransactionService_ImportCSV_UnknownCategoryMapsToNil
+--- PASS: TestTransactionService_ImportCSV_UnknownCategoryMapsToNil (0.00s)
+=== RUN   TestTransactionService_ImportCSV_Cancellation
+--- PASS: TestTransactionService_ImportCSV_Cancellation (0.00s)
+=== RUN   TestTransactionService_ImportCSV_ConcurrencyStress
+--- PASS: TestTransactionService_ImportCSV_ConcurrencyStress (0.00s)
+=== RUN   TestTransactionService_Create_Success
+--- PASS: TestTransactionService_Create_Success (0.00s)
+=== RUN   TestTransactionService_Create_Uncategorized_Success
+--- PASS: TestTransactionService_Create_Uncategorized_Success (0.00s)
+=== RUN   TestTransactionService_Create_ValidationErrors
+=== RUN   TestTransactionService_Create_ValidationErrors/zero_amount
+=== RUN   TestTransactionService_Create_ValidationErrors/negative_amount
+=== RUN   TestTransactionService_Create_ValidationErrors/invalid_type
+=== RUN   TestTransactionService_Create_ValidationErrors/invalid_date_format
+=== RUN   TestTransactionService_Create_ValidationErrors/empty_date
+=== RUN   TestTransactionService_Create_ValidationErrors/category_belongs_to_another_user     
+=== RUN   TestTransactionService_Create_ValidationErrors/non-existent_category
+=== RUN   TestTransactionService_Create_ValidationErrors/category_type_mismatch_(expense_tx_with_income_category)
+--- PASS: TestTransactionService_Create_ValidationErrors (0.00s)
+    --- PASS: TestTransactionService_Create_ValidationErrors/zero_amount (0.00s)
+    --- PASS: TestTransactionService_Create_ValidationErrors/negative_amount (0.00s)
+    --- PASS: TestTransactionService_Create_ValidationErrors/invalid_type (0.00s)
+    --- PASS: TestTransactionService_Create_ValidationErrors/invalid_date_format (0.00s)      
+    --- PASS: TestTransactionService_Create_ValidationErrors/empty_date (0.00s)
+    --- PASS: TestTransactionService_Create_ValidationErrors/category_belongs_to_another_user (0.00s)
+    --- PASS: TestTransactionService_Create_ValidationErrors/non-existent_category (0.00s)    
+    --- PASS: TestTransactionService_Create_ValidationErrors/category_type_mismatch_(expense_tx_with_income_category) (0.00s)
+=== RUN   TestTransactionService_GetTransaction
+--- PASS: TestTransactionService_GetTransaction (0.00s)
+=== RUN   TestTransactionService_UpdateTransaction
+--- PASS: TestTransactionService_UpdateTransaction (0.00s)
+=== RUN   TestTransactionService_DeleteTransaction
+--- PASS: TestTransactionService_DeleteTransaction (0.00s)
+=== RUN   TestTransactionService_ListTransactions_DefaultsAndPagination
+--- PASS: TestTransactionService_ListTransactions_DefaultsAndPagination (0.00s)
+=== RUN   TestTransactionService_ListTransactions_ValidationErrors
+=== RUN   TestTransactionService_ListTransactions_ValidationErrors/limit_exceeds_100
+=== RUN   TestTransactionService_ListTransactions_ValidationErrors/mutually_exclusive_category_id_and_uncategorized
+=== RUN   TestTransactionService_ListTransactions_ValidationErrors/invalid_start_date_format  
+=== RUN   TestTransactionService_ListTransactions_ValidationErrors/invalid_end_date_format    
+=== RUN   TestTransactionService_ListTransactions_ValidationErrors/start_date_greater_than_end_date
+=== RUN   TestTransactionService_ListTransactions_ValidationErrors/invalid_type
+--- PASS: TestTransactionService_ListTransactions_ValidationErrors (0.00s)
+    --- PASS: TestTransactionService_ListTransactions_ValidationErrors/limit_exceeds_100 (0.00s)
+    --- PASS: TestTransactionService_ListTransactions_ValidationErrors/mutually_exclusive_category_id_and_uncategorized (0.00s)
+    --- PASS: TestTransactionService_ListTransactions_ValidationErrors/invalid_start_date_format (0.00s)
+    --- PASS: TestTransactionService_ListTransactions_ValidationErrors/invalid_end_date_format (0.00s)
+    --- PASS: TestTransactionService_ListTransactions_ValidationErrors/start_date_greater_than_end_date (0.00s)
+    --- PASS: TestTransactionService_ListTransactions_ValidationErrors/invalid_type (0.00s)   
+PASS
+ok      github.com/hoangduc102/fintrack/internal/service        7.176s

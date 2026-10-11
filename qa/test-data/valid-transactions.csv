@@ -1,0 +1,6 @@
+date,type,amount,category,description
+2026-10-01,INCOME,25000000,Salary,Luong thang 10
+2026-10-02,EXPENSE,120000,Food & Dining,An trua van phong
+2026-10-03,EXPENSE,450000,Transportation,Xang xe va phi cau duong
+2026-10-04,EXPENSE,3500000,Housing,Tien dien nuoc va phi dich vu
+2026-10-05,INCOME,5000000,Freelance,Thu nhap tu van du an

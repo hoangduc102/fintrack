@@ -1,0 +1,7 @@
+date,type,amount,category,description
+2026-10-06,EXPENSE,150000,Food & Dining,Ca phe va do an nhe
+2026/13/45,EXPENSE,200000,Food & Dining,Dong loi sai dinh dang ngay
+2026-10-07,INVESTMENT,5000000,Salary,Dong loi sai loai giao dich
+2026-10-08,EXPENSE,-80000,Transportation,Dong loi so tien am
+2026-10-09,EXPENSE,95000,UnknownCategory,Dong hop le voi danh muc tu chuyen sang Uncategorized
+2026-10-10,INCOME,1200000,Freelance,Thu nhap thiet ke banner

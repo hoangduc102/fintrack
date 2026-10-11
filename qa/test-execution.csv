@@ -1,0 +1,551 @@
+Test Run ID,Test Case ID,Execution Date,Tester,Environment,Application Version,Actual Result,Status,Evidence Path,Bug ID,Notes
+TR-001,AUTH-001,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 201Created;{""id"": ""a0e832e5-9609-4607-8a40-084e953bdcd7"",""email"": ""tester_a@fintrack.local"",""display_name"": ""QA Tester A"",""created_at"": ""2026-10-10T23:40:01+07:00"",""updated_at"": ""2026-10-10T23:40:01+07:00""}",PASS,evidence/auth/AUTH-001-register-success.png,,
+TR-001,AUTH-002,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 201Created;{""id"": ""b3e726e5-9609-4607-8a40-123e953bdcd7"",""email"": ""tester_a@fintrack.local,""created_at"": ""2026-10-010T23:40:01+07:00"",""updated_at"": ""2026-10-010T23:40:01+07:00""}",PASS,,,
+TR-001,AUTH-003,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 409 Conflict; {""error"": {""code"": ""CONFLICT"", ""message"": ""email already exists""}}.",PASS,,,
+TR-001,AUTH-004,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 409 Conflict; {""error"": {""code"": ""CONFLICT"", ""message"": ""email already exists""}}.",PASS,,,
+TR-001,AUTH-005,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 400 Bad Request; {""error"": {""code"": ""BAD_REQUEST"", ""fields"": {""email"": ""invalid email format""}, ""message"": ""invalid email format""}}.",PASS,,,
+TR-001,AUTH-006,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 400 Bad Request; {""error"": {""code"": ""BAD_REQUEST"", ""fields"": {""email"": ""invalid email format""}, ""message"": ""invalid email format""}}.",PASS,,,
+TR-001,AUTH-007,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 400 Bad Request;{""error"": {""code"": ""BAD_REQUEST"", ""fields"": {""email"": ""email is required""}, ""message"": ""email is required""}}.",PASS,,,
+TR-001,AUTH-008,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 400 Bad Request; {""error"": {""code"": ""BAD_REQUEST"", ""fields"": {""password"": ""password must be at least 8 characters""}, ""message"": ""password must be at least 8 characters""}}.",PASS,evidence/auth/AUTH-008-password-least-8-characters.png,,
+TR-001,AUTH-009,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 400 Bad Request ;{""error"": {""code"": ""BAD_REQUEST"", ""fields"": {""password"": ""password cannot exceed 72 bytes""}, ""message"": ""password cannot exceed 72 bytes""}}.",PASS,,,
+TR-001,AUTH-010,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 201Created;{""id"": ""b84a2e08-7baa-4ba1-85dc-c990efde378e"",""email"": ""pwd8@fintrack.local"",""created_at"": ""2026-10-10T00:43:52+07:00"",""updated_at"": ""2026-10-10T00:43:52+07:00""}",PASS,,,
+TR-001,AUTH-011,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),HTTP 200 OK; {"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlMDMxNmY1Yi03Nzg3LTQ4M2MtOWM5OS1iYzU5ZGUyOGVkZTkiLCJleHAiOjE3OTE2NTQzNTEsImlhdCI6MTc5MTU2Nzk1MX0._tYFaCylJj5Np-ZNrG4ZVdIwVJPAHy5tYsmcAm1YgV0"},PASS,evidence/auth/AUTH-011-login-success.png,,
+TR-001,AUTH-012,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP  401 Unauthorized;{""error"": {""code"": ""UNAUTHORIZED"", ""message"": ""invalid email or password""}}.",PASS,,,
+TR-001,AUTH-013,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP  401 Unauthorized;{""error"": {""code"": ""UNAUTHORIZED"", ""message"": ""invalid email or password""}}.",PASS,,,
+TR-001,AUTH-014,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 200 OK.;{""id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",""email"": ""tester_a@fintrack.local"",""display_name"": ""QA Tester A"",""created_at"": ""2026-10-09T21:52:28+07:00"",""updated_at"": ""2026-10-09T21:52:28+07:00""}",PASS,,,
+TR-001,AUTH-015,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 401 Unauthorized;{""error"": {""code"": ""UNAUTHORIZED"", ""message"": ""missing authorization header""}}.",PASS,evidence/auth/AUTH-015-missing-authorization-header.png,,
+TR-001,AUTH-017,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 401 Unauthorized;{""error"": {""code"": ""UNAUTHORIZED"", ""message"": ""invalid or expired token""}}.",PASS,,,
+TR-001,AUTH-018,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 401 Unauthorized;{""error"": {""code"": ""UNAUTHORIZED"", ""message"": ""invalid or expired token""}}.",PASS,,,
+TR-001,AUTH-019,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),HTTP 200 OK; {"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhMGU4MzJlNS05NjA5LTQ2MDctOGE0MC0wODRlOTUzYmRjZDciLCJleHAiOjE3OTE2NTU2MTMsImlhdCI6MTc5MTU2OTIxM30.OEtktxL3uSHnVcnikbebo1mOES8hK6h8irc96KnpprM"},PASS,,,
+TR-001,TRANS-001,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 201 Created;{
+    ""id"": ""81db7315-0b8d-44fc-9f26-78e388fac3f7"",
+    ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+    ""amount"": 150000,
+    ""type"": ""EXPENSE"",
+    ""category_id"": null,
+    ""transaction_date"": ""2026-10-10"",
+    ""description"": ""Team lunch"",
+    ""created_at"": ""2026-10-10T23:22:03+07:00"",
+    ""updated_at"": ""2026-10-10T23:22:03+07:00""
+}",PASS,evidence/transactions/TRANS-001.png,,
+TR-001,TRANS-002,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 201 Created;{
+    ""id"": ""81db7315-0b8d-44fc-9f26-78e388fac3f7"",
+    ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+    ""amount"": 150000,
+    ""type"": ""EXPENSE"",
+    ""category_id"": null,
+    ""transaction_date"": ""2026-10-10"",
+    ""description"": ""Team lunch"",
+    ""created_at"": ""2026-10-10T23:22:03+07:00"",
+    ""updated_at"": ""2026-10-10T23:22:03+07:00""
+}",PASS,,,
+TR-001,TRANS-003,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 201 Created;{
+    ""id"": ""81db7315-0b8d-44fc-9f26-78e388fac3f7"",
+    ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+    ""amount"": 150000,
+    ""type"": ""EXPENSE"",
+    ""category_id"": null,
+    ""transaction_date"": ""2026-10-10"",
+    ""description"": ""Team lunch"",
+    ""created_at"": ""2026-10-10T23:22:03+07:00"",
+    ""updated_at"": ""2026-10-10T23:22:03+07:00""
+}",PASS,,,
+TR-001,TRANS-004,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 400 Bad Request;{""error"": {""code"": ""VALIDATION_ERROR"", ""fields"": {""amount"": ""amount must be greater than zero""}, ""message"": ""amount must be greater than zero""}}.",PASS,,,
+TR-001,TRANS-005,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 400 Bad Request;{""error"": {""code"": ""VALIDATION_ERROR"", ""fields"": {""amount"": ""amount must be greater than zero""}, ""message"": ""amount must be greater than zero""}}.",PASS,,,
+TR-001,TRANS-006,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 201 Created; {
+    ""id"": ""027e670f-e134-48a7-8aee-c920b9a454b3"",
+    ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+    ""amount"": 50000000000,
+    ""type"": ""INCOME"",
+    ""category_id"": null,
+    ""transaction_date"": ""2026-10-05"",
+    ""description"": ""Real estate revenue"",
+    ""created_at"": ""2026-10-10T23:56:42+07:00"",
+    ""updated_at"": ""2026-10-10T23:56:42+07:00""
+}",PASS,evidence/transactions/TRANS-006.png,,
+TR-001,TRANS-007,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 400 Bad Request;{""error"": {""code"": ""VALIDATION_ERROR"", ""fields"": {""category_id"": ""category type does not match transaction type""}, ""message"": ""category type does not match transaction type""}}.",PASS,,,
+TR-001,TRANS-008,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 400 Bad Request;{""error"": {""code"": ""VALIDATION_ERROR"", ""fields"": {""category_id"": ""category type does not match transaction type""}, ""message"": ""category type does not match transaction type""}}.",PASS,evidence/transactions/TRANS-008.png,,
+TR-001,TRANS-009,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 400 Bad Request;{""error"": {""code"": ""VALIDATION_ERROR"", ""fields"": {""category_id"": ""category not found or not owned by user""}, ""message"": ""category not found or not owned by user""}}.",PASS,,,
+TR-001,TRANS-010,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 400 Bad Request; {""error"": {""code"": ""VALIDATION_ERROR"", ""fields"": {""transaction_date"": ""transaction_date must be in YYYY-MM-DD format""}, ""message"": ""transaction_date must be in YYYY-MM-DD format""}}.",PASS,,,
+TR-001,TRANS-011,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 400 Bad Request;{""error"": {""code"": ""VALIDATION_ERROR"", ""fields"": {""transaction_date"": ""transaction_date is required""}, ""message"": ""transaction_date is required""}}.",PASS,evidence/transactions/TRANS-011.png,,
+TR-001,TRANS-012,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 200 OK;{
+    ""items"": [
+        {
+            ""id"": ""2aa2583b-2bf0-4f7a-af42-faf97a9b7bf4"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 150000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-10"",
+            ""description"": ""Team lunch"",
+            ""created_at"": ""2026-10-11T00:10:21+07:00"",
+            ""updated_at"": ""2026-10-11T00:10:21+07:00""
+        },
+        {
+            ""id"": ""7b03c474-e7fa-4842-b5fe-a61d6ea02ea8"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 150000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-10"",
+            ""description"": ""Team lunch"",
+            ""created_at"": ""2026-10-11T00:10:19+07:00"",
+            ""updated_at"": ""2026-10-11T00:10:19+07:00""
+        },
+        {
+            ""id"": ""81f8994d-6d02-41f0-9f94-f8ef5f11ef9d"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 150000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-10"",
+            ""description"": ""Team lunch"",
+            ""created_at"": ""2026-10-11T00:10:14+07:00"",
+            ""updated_at"": ""2026-10-11T00:10:14+07:00""
+        },
+        {
+            ""id"": ""4c75150d-5baf-4124-91ba-204d1ef81a0a"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 50000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-10"",
+            ""description"": ""Parking fee"",
+            ""created_at"": ""2026-10-10T23:46:56+07:00"",
+            ""updated_at"": ""2026-10-10T23:46:56+07:00""
+        },
+        {
+            ""id"": ""81db7315-0b8d-44fc-9f26-78e388fac3f7"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 150000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-10"",
+            ""description"": ""Team lunch"",
+            ""created_at"": ""2026-10-10T23:22:03+07:00"",
+            ""updated_at"": ""2026-10-10T23:22:03+07:00""
+        },
+        {
+            ""id"": ""0fd63095-7d6a-42e7-a716-a313783ce361"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 150000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-10"",
+            ""description"": ""Team lunch"",
+            ""created_at"": ""2026-10-10T01:44:52+07:00"",
+            ""updated_at"": ""2026-10-10T01:44:52+07:00""
+        },
+        {
+            ""id"": ""2193f533-b81b-47b6-a9b2-f3617fa04066"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 50000000000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-05"",
+            ""description"": ""Real estate revenue"",
+            ""created_at"": ""2026-10-11T00:09:05+07:00"",
+            ""updated_at"": ""2026-10-11T00:09:05+07:00""
+        },
+        {
+            ""id"": ""027e670f-e134-48a7-8aee-c920b9a454b3"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 50000000000,
+            ""type"": ""INCOME"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-05"",
+            ""description"": ""Real estate revenue"",
+            ""created_at"": ""2026-10-10T23:56:42+07:00"",
+            ""updated_at"": ""2026-10-10T23:56:42+07:00""
+        }
+    ],
+    ""pagination"": {
+        ""page"": 1,
+        ""limit"": 20,
+        ""total_items"": 8,
+        ""total_pages"": 1
+    }
+}",PASS,evidence/transactions/TRANS-012.png,,
+TR-001,TRANS-013,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 404 Not Found;{""error"": {""code"": ""NOT_FOUND"", ""message"": ""transaction not found""}}. Access is denied and resource existence is masked.",PASS,evidence/transactions/TRANS-013.png,,
+TR-001,TRANS-014,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 200 OK;{
+    ""id"": ""2aa2583b-2bf0-4f7a-af42-faf97a9b7bf4"",
+    ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+    ""amount"": 220000,
+    ""type"": ""EXPENSE"",
+    ""category_id"": null,
+    ""transaction_date"": ""2026-10-10"",
+    ""description"": ""Updated team lunch description"",
+    ""created_at"": ""2026-10-11T00:10:21+07:00"",
+    ""updated_at"": ""2026-10-11T01:06:39+07:00""
+}",PASS,evidence/transactions/TRANS-014.png,,
+TR-001,TRANS-015,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),HTTP 204 No Content,PASS,evidence/transactions/TRANS-015.png,,
+TR-001,TRANS-016,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 200 OK;{
+    ""items"": [
+        {
+            ""id"": ""7b03c474-e7fa-4842-b5fe-a61d6ea02ea8"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 150000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-10"",
+            ""description"": ""Team lunch"",
+            ""created_at"": ""2026-10-11T00:10:19+07:00"",
+            ""updated_at"": ""2026-10-11T00:10:19+07:00""
+        },
+        {
+            ""id"": ""81f8994d-6d02-41f0-9f94-f8ef5f11ef9d"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 150000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-10"",
+            ""description"": ""Team lunch"",
+            ""created_at"": ""2026-10-11T00:10:14+07:00"",
+            ""updated_at"": ""2026-10-11T00:10:14+07:00""
+        },
+        {
+            ""id"": ""4c75150d-5baf-4124-91ba-204d1ef81a0a"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 50000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-10"",
+            ""description"": ""Parking fee"",
+            ""created_at"": ""2026-10-10T23:46:56+07:00"",
+            ""updated_at"": ""2026-10-10T23:46:56+07:00""
+        },
+        {
+            ""id"": ""81db7315-0b8d-44fc-9f26-78e388fac3f7"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 150000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-10"",
+            ""description"": ""Team lunch"",
+            ""created_at"": ""2026-10-10T23:22:03+07:00"",
+            ""updated_at"": ""2026-10-10T23:22:03+07:00""
+        },
+        {
+            ""id"": ""0fd63095-7d6a-42e7-a716-a313783ce361"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 150000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-10"",
+            ""description"": ""Team lunch"",
+            ""created_at"": ""2026-10-10T01:44:52+07:00"",
+            ""updated_at"": ""2026-10-10T01:44:52+07:00""
+        },
+        {
+            ""id"": ""2193f533-b81b-47b6-a9b2-f3617fa04066"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 50000000000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-05"",
+            ""description"": ""Real estate revenue"",
+            ""created_at"": ""2026-10-11T00:09:05+07:00"",
+            ""updated_at"": ""2026-10-11T00:09:05+07:00""
+        },
+        {
+            ""id"": ""027e670f-e134-48a7-8aee-c920b9a454b3"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 50000000000,
+            ""type"": ""INCOME"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-05"",
+            ""description"": ""Real estate revenue"",
+            ""created_at"": ""2026-10-10T23:56:42+07:00"",
+            ""updated_at"": ""2026-10-10T23:56:42+07:00""
+        }
+    ],
+    ""pagination"": {
+        ""page"": 1,
+        ""limit"": 20,
+        ""total_items"": 7,
+        ""total_pages"": 1
+    }
+}",PASS,evidence/transactions/TRANS-016.png,,
+TR-001,TRANS-017,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 200 OK; {
+    ""items"": [],
+    ""pagination"": {
+        ""page"": 2,
+        ""limit"": 20,
+        ""total_items"": 7,
+        ""total_pages"": 1
+    }
+}",PASS,,,
+TR-001,TRANS-018,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 200 OK; {
+    ""items"": [
+        {
+            ""id"": ""7b03c474-e7fa-4842-b5fe-a61d6ea02ea8"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 150000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-10"",
+            ""description"": ""Team lunch"",
+            ""created_at"": ""2026-10-11T00:10:19+07:00"",
+            ""updated_at"": ""2026-10-11T00:10:19+07:00""
+        },
+        {
+            ""id"": ""81f8994d-6d02-41f0-9f94-f8ef5f11ef9d"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 150000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-10"",
+            ""description"": ""Team lunch"",
+            ""created_at"": ""2026-10-11T00:10:14+07:00"",
+            ""updated_at"": ""2026-10-11T00:10:14+07:00""
+        },
+        {
+            ""id"": ""4c75150d-5baf-4124-91ba-204d1ef81a0a"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 50000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-10"",
+            ""description"": ""Parking fee"",
+            ""created_at"": ""2026-10-10T23:46:56+07:00"",
+            ""updated_at"": ""2026-10-10T23:46:56+07:00""
+        },
+        {
+            ""id"": ""81db7315-0b8d-44fc-9f26-78e388fac3f7"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 150000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-10"",
+            ""description"": ""Team lunch"",
+            ""created_at"": ""2026-10-10T23:22:03+07:00"",
+            ""updated_at"": ""2026-10-10T23:22:03+07:00""
+        },
+        {
+            ""id"": ""0fd63095-7d6a-42e7-a716-a313783ce361"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 150000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-10"",
+            ""description"": ""Team lunch"",
+            ""created_at"": ""2026-10-10T01:44:52+07:00"",
+            ""updated_at"": ""2026-10-10T01:44:52+07:00""
+        },
+        {
+            ""id"": ""2193f533-b81b-47b6-a9b2-f3617fa04066"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 50000000000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-05"",
+            ""description"": ""Real estate revenue"",
+            ""created_at"": ""2026-10-11T00:09:05+07:00"",
+            ""updated_at"": ""2026-10-11T00:09:05+07:00""
+        }
+    ],
+    ""pagination"": {
+        ""page"": 1,
+        ""limit"": 20,
+        ""total_items"": 6,
+        ""total_pages"": 1
+    }
+}",PASS,,,
+TR-001,TRANS-019,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 200 OK;{
+    ""items"": [
+        {
+            ""id"": ""7b03c474-e7fa-4842-b5fe-a61d6ea02ea8"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 150000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-10"",
+            ""description"": ""Team lunch"",
+            ""created_at"": ""2026-10-11T00:10:19+07:00"",
+            ""updated_at"": ""2026-10-11T00:10:19+07:00""
+        },
+        {
+            ""id"": ""81f8994d-6d02-41f0-9f94-f8ef5f11ef9d"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 150000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-10"",
+            ""description"": ""Team lunch"",
+            ""created_at"": ""2026-10-11T00:10:14+07:00"",
+            ""updated_at"": ""2026-10-11T00:10:14+07:00""
+        },
+        {
+            ""id"": ""4c75150d-5baf-4124-91ba-204d1ef81a0a"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 50000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-10"",
+            ""description"": ""Parking fee"",
+            ""created_at"": ""2026-10-10T23:46:56+07:00"",
+            ""updated_at"": ""2026-10-10T23:46:56+07:00""
+        },
+        {
+            ""id"": ""81db7315-0b8d-44fc-9f26-78e388fac3f7"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 150000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-10"",
+            ""description"": ""Team lunch"",
+            ""created_at"": ""2026-10-10T23:22:03+07:00"",
+            ""updated_at"": ""2026-10-10T23:22:03+07:00""
+        },
+        {
+            ""id"": ""0fd63095-7d6a-42e7-a716-a313783ce361"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 150000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-10"",
+            ""description"": ""Team lunch"",
+            ""created_at"": ""2026-10-10T01:44:52+07:00"",
+            ""updated_at"": ""2026-10-10T01:44:52+07:00""
+        },
+        {
+            ""id"": ""2193f533-b81b-47b6-a9b2-f3617fa04066"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 50000000000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-05"",
+            ""description"": ""Real estate revenue"",
+            ""created_at"": ""2026-10-11T00:09:05+07:00"",
+            ""updated_at"": ""2026-10-11T00:09:05+07:00""
+        }
+    ],
+    ""pagination"": {
+        ""page"": 1,
+        ""limit"": 20,
+        ""total_items"": 6,
+        ""total_pages"": 1
+    }
+}",PASS,,,
+TR-001,TRANS-020,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 200 OK; {
+    ""items"": [
+        {
+            ""id"": ""7b03c474-e7fa-4842-b5fe-a61d6ea02ea8"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 150000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-10"",
+            ""description"": ""Team lunch"",
+            ""created_at"": ""2026-10-11T00:10:19+07:00"",
+            ""updated_at"": ""2026-10-11T00:10:19+07:00""
+        },
+        {
+            ""id"": ""81f8994d-6d02-41f0-9f94-f8ef5f11ef9d"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 150000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-10"",
+            ""description"": ""Team lunch"",
+            ""created_at"": ""2026-10-11T00:10:14+07:00"",
+            ""updated_at"": ""2026-10-11T00:10:14+07:00""
+        },
+        {
+            ""id"": ""4c75150d-5baf-4124-91ba-204d1ef81a0a"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 50000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-10"",
+            ""description"": ""Parking fee"",
+            ""created_at"": ""2026-10-10T23:46:56+07:00"",
+            ""updated_at"": ""2026-10-10T23:46:56+07:00""
+        },
+        {
+            ""id"": ""81db7315-0b8d-44fc-9f26-78e388fac3f7"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 150000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-10"",
+            ""description"": ""Team lunch"",
+            ""created_at"": ""2026-10-10T23:22:03+07:00"",
+            ""updated_at"": ""2026-10-10T23:22:03+07:00""
+        },
+        {
+            ""id"": ""0fd63095-7d6a-42e7-a716-a313783ce361"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 150000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-10"",
+            ""description"": ""Team lunch"",
+            ""created_at"": ""2026-10-10T01:44:52+07:00"",
+            ""updated_at"": ""2026-10-10T01:44:52+07:00""
+        },
+        {
+            ""id"": ""2193f533-b81b-47b6-a9b2-f3617fa04066"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 50000000000,
+            ""type"": ""EXPENSE"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-05"",
+            ""description"": ""Real estate revenue"",
+            ""created_at"": ""2026-10-11T00:09:05+07:00"",
+            ""updated_at"": ""2026-10-11T00:09:05+07:00""
+        },
+        {
+            ""id"": ""027e670f-e134-48a7-8aee-c920b9a454b3"",
+            ""user_id"": ""e0316f5b-7787-483c-9c99-bc59de28ede9"",
+            ""amount"": 50000000000,
+            ""type"": ""INCOME"",
+            ""category_id"": null,
+            ""transaction_date"": ""2026-10-05"",
+            ""description"": ""Real estate revenue"",
+            ""created_at"": ""2026-10-10T23:56:42+07:00"",
+            ""updated_at"": ""2026-10-10T23:56:42+07:00""
+        }
+    ],
+    ""pagination"": {
+        ""page"": 1,
+        ""limit"": 20,
+        ""total_items"": 7,
+        ""total_pages"": 1
+    }
+}",PASS,,,
+TR-001,CSV-001,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 200 OK; {""total"": 5, ""imported"": 5, ""failed"": 0, ""errors"": null}.",PASS,evidence/csv-import/CSV-001-valid-batch-import.png,,
+TR-001,CSV-002,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),HTTP 200 OK with 5 imported.,PASS,,,
+TR-001,CSV-003,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 400 Bad Request; {""error"": {""code"": ""VALIDATION_ERROR"", ""fields"": {""header"": ""header must be date,type,amount,category,description""}, ""message"": ""header must be date,type,amount,category,description""}}.",PASS,,,
+TR-001,CSV-004,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 400 Bad Request; {""error"": {""code"": ""VALIDATION_ERROR"", ""fields"": {""header"": ""empty or invalid CSV file""}, ""message"": ""empty or invalid CSV file""}}.",PASS,,,
+TR-001,CSV-005,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 200 OK; {
+    ""total"": 6,
+    ""imported"": 3,
+    ""failed"": 3,
+    ""errors"": [
+        {
+            ""row"": 3,
+            ""error"": ""invalid date format, must be YYYY-MM-DD""
+        },
+        {
+            ""row"": 4,
+            ""error"": ""type must be INCOME or EXPENSE""
+        },
+        {
+            ""row"": 5,
+            ""error"": ""amount must be a positive integer""
+        }
+    ]
+}",PASS,evidence/csv-import/CSV-005-mixed-valid-and-invalid-rows.png,,
+TR-001,CSV-006,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 200; {
+    ""total"": 1,
+    ""imported"": 1,
+    ""failed"": 0,
+    ""errors"": null
+}",PASS,,,
+TR-001,CSV-007,10/10/2026,hoangduc102,Local Dev (Go Gin :8080 / PostgreSQL 16),Git HEAD (Go 1.25),"HTTP 200; {
+    ""total"": 1,
+    ""imported"": 1,
+    ""failed"": 0,
+    ""errors"": null
+}",PASS,,,

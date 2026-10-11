@@ -1,0 +1,63 @@
+{
+  "id": "fintrack-local-env-example",
+  "name": "FinTrack Local Dev (Example)",
+  "values": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "test_email",
+      "value": "tester_a@fintrack.local",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "test_password",
+      "value": "Password123!",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "user_b_email",
+      "value": "tester_b@fintrack.local",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "user_b_token",
+      "value": "",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "expense_category_id",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "income_category_id",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "transaction_id",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment",
+  "_postman_exported_at": "2026-10-09T04:30:00.000Z",
+  "_postman_exported_using": "Postman/11.0.0"
+}
